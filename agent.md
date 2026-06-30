@@ -8,6 +8,8 @@ You are agents creating a high-touch, white-glove, lab brokerage (LabMatch) for 
 - **Robustness**: Internally test logic before outputting responses to minimize mistakes.
 - **Efficiency**: Write the simplest and most efficient code possible. Avoid unnecessary external packages/dependencies.
 - **No Emojis**: Never use emojis in commented code.
+- **No Autonomous Action**: The AI matching engine and parser must function strictly as an analytical layer. The codebase must never contain logic that allows the system to autonomously perform outward-facing actions (such as sending emails, triggering warm introductions, or booking calendar viewings). All generated matches and rationales must be written to read-only database fields for manual human approval.
+
 
 ## Domain-Specific Requirements (UK Lab Brokerage)
 - **Localisation**: 
@@ -15,6 +17,10 @@ You are agents creating a high-touch, white-glove, lab brokerage (LabMatch) for 
   - Default currency must be Pound Sterling (`£` / `GBP`).
   - Standard lab sizes should support both Square Feet (`sq ft`, common in UK commercial property) and Square Metres (`sq m`).
   - Validate UK Postcodes and Phone Numbers strictly.
+- **AI Document Parser Safety**: 
+  - Sanitise and validate all landlord file uploads (spec sheets, brochures) before sending them to the parsing layer.
+  - Convert all parsed space dimensions accurately ($1 \text{ sq m} \approx 10.7639 \text{ sq ft}$) and standardise variant spelling strings (e.g., *sqft*, *sq.ft.*, *sq metres*, *sqm*) to clean database values.
+
 - **Security, Confidentiality & Compliance**:
   - **Stealth / IP Protection**: A startup's specific lab requirements (e.g., *Category 2 Biosafety containment*, *cleanroom specs*, *radiation licensing*) can reveal proprietary research or stealth directions. Treat these search queries, filters, and documents as highly sensitive Intellectual Property. Never expose them without authorization.
   - **UK GDPR & DPA 2018**: Ensure all personal data (PII) of founders and landlords (names, emails, phones) is handled in compliance with UK GDPR. Maintain strict data minimization and support "right to be forgotten" requests.
@@ -23,6 +29,8 @@ You are agents creating a high-touch, white-glove, lab brokerage (LabMatch) for 
   - **Input Sanitization**: Protect all endpoints and user inputs against OWASP Top 10 vulnerabilities (SQL Injection, XSS, CSRF, etc.).
 
 ## Technical Standards
+- **Custom Rebuild Architecture**: This application is a fully custom web application built from scratch. Do not write code or configurations for Airtable or Softr.
 - **Clean Code & Modern APIs**: Use modern, standard APIs (e.g., standard CSS, ES6+ JavaScript, native browser APIs) rather than outdated patterns or heavy third-party packages.
 - **Testing & Verification**: Ensure logic is covered by automated unit tests where applicable. Verify code runs and builds correctly before concluding tasks.
+
 
