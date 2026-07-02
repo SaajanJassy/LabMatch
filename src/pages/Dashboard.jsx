@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { glowMove } from '../utils/glow';
@@ -100,9 +100,16 @@ const initialLandlordListings = [
   { id: 'recTjwBiL', name: 'Wet Lab VH-001', type: 'Wet Lab', status: 'Let', sqft: 700, landlord: 'Pioneer Group' }
 ];
 
+// Mock Enquiries (calls booked by startups)
+const initialEnquiries = [
+  { id: 'enq-1', startupName: 'Dr. Sarah Jenkins', company: 'Astra Biosciences', email: 'sarah@astrabio.com', targetLocation: 'London', labType: 'Dry Lab', listingId: 'rec5zhxbm', date: '2026-07-02', status: 'Call Booked' },
+  { id: 'enq-2', startupName: 'Liam Carter', company: 'Helix Genomes', email: 'liam@helixgen.io', targetLocation: 'Leeds', labType: 'Wet Lab', listingId: 'rechlQvjY', date: '2026-07-01', status: 'Call Booked' }
+];
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const userMenuRef = useRef(null);
 
   // Flow states
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
@@ -122,6 +129,8 @@ export default function Dashboard() {
 
   // Landlord Flow states
   const [landlordListings, setLandlordListings] = useState([]);
+  const [enquiries, setEnquiries] = useState([]);
+  const [landlordTab, setLandlordTab] = useState('hub'); // 'hub', 'listings', 'enquiries'
   const [showAddChoice, setShowAddChoice] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
   const [showUploadLoader, setShowUploadLoader] = useState(false);
@@ -173,8 +182,30 @@ export default function Dashboard() {
         setLandlordListings(initialLandlordListings);
         localStorage.setItem('landlord_listings', JSON.stringify(initialLandlordListings));
       }
+
+      // Load enquiries
+      const savedEnquiries = localStorage.getItem('landlord_enquiries');
+      if (savedEnquiries) {
+        setEnquiries(JSON.parse(savedEnquiries));
+      } else {
+        setEnquiries(initialEnquiries);
+        localStorage.setItem('landlord_enquiries', JSON.stringify(initialEnquiries));
+      }
     }
   }, [navigate]);
+
+  // Click outside to close profile card
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Simulate background matching calculations (Startup)
   const startMatchingSimulation = (specs) => {
@@ -340,7 +371,7 @@ export default function Dashboard() {
       <nav className={styles.sleekNavbar}>
         <div className={styles.logo}>LabMatch.</div>
         <div className={styles.navActions}>
-          <div className={styles.userMenuWrapper}>
+          <div ref={userMenuRef} className={styles.userMenuWrapper}>
             {renderUserPill()}
             
             <AnimatePresence>
@@ -506,202 +537,301 @@ export default function Dashboard() {
       {/* ROLE: LANDLORD */}
       {user.role === 'landlord' && (
         <main className={styles.mainContent}>
-          {/* Top Search bar, Filters and Add record pill */}
-          <div className={styles.landlordFilterBar}>
-            <div className={styles.searchAndFilters}>
-              <div className={styles.searchContainer}>
-                <svg viewBox="0 0 24 24" width="16" height="16" className={styles.searchIcon}>
-                  <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                </svg>
-                <input 
-                  type="text" 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search listings..." 
-                  className={styles.searchInput}
-                />
-              </div>
+          
+          {/* LANDLORD STATE 1: HUB VIEW (Dual Liquid Glass Cards) */}
+          {landlordTab === 'hub' && (
+            <div className={styles.hubWrapper}>
+              <h1 className={styles.hubTitle}>Landlord Control Hub</h1>
+              <p className={styles.hubSubtitle}>Select a section to manage listings or view booked enquiries</p>
+              
+              <div className={styles.hubGrid}>
+                <button onClick={() => setLandlordTab('listings')} className={`${styles.hubCard} glow`} onMouseMove={glowMove}>
+                  <div className={styles.hubCardContent}>
+                    <h2>Listings</h2>
+                    <p>Manage your facility details, available size capacities, and update statuses inline.</p>
+                  </div>
+                </button>
 
-              <div className={styles.dropdownFilters}>
-                <select 
-                  value={landlordFilter} 
-                  onChange={(e) => setLandlordFilter(e.target.value)}
-                  className={styles.filterSelect}
-                >
-                  <option value="All">Landlord: All</option>
-                  <option value="Pioneer Group">Pioneer Group</option>
-                  <option value="Nexus Leeds">Nexus Leeds</option>
-                </select>
-
-                <select 
-                  value={typeFilter} 
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className={styles.filterSelect}
-                >
-                  <option value="All">Listing Type: All</option>
-                  <option value="Dry Lab">Dry Lab</option>
-                  <option value="Wet Lab">Wet Lab</option>
-                  <option value="Hybrid Lab">Hybrid Lab</option>
-                </select>
-
-                <select 
-                  value={statusFilter} 
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className={styles.filterSelect}
-                >
-                  <option value="All">Status: All</option>
-                  <option value="Available">Available</option>
-                  <option value="Under Offer">Under Offer</option>
-                  <option value="Let">Let</option>
-                </select>
+                <button onClick={() => setLandlordTab('enquiries')} className={`${styles.hubCard} glow`} onMouseMove={glowMove}>
+                  <div className={styles.hubCardContent}>
+                    <h2>Enquiries</h2>
+                    <p>View science startups that have booked calls to tour your laboratory properties.</p>
+                  </div>
+                </button>
               </div>
             </div>
+          )}
 
-            <button onClick={() => setShowAddChoice(true)} className={styles.primaryPill}>
-              Add record
-            </button>
-          </div>
+          {/* LANDLORD STATE 2: LISTINGS VIEW (Table) */}
+          {landlordTab === 'listings' && (
+            <div className={styles.listingsViewWrapper}>
+              <div className={styles.viewHeader}>
+                <button onClick={() => setLandlordTab('hub')} className={styles.backBtn}>
+                  &larr; Back to Hub
+                </button>
+                <h1 className={styles.viewTitle}>Manage Lab Listings</h1>
+              </div>
 
-          {/* Apple-Style Liquid Glass Table */}
-          <div className={styles.tableWrapper}>
-            <table className={styles.glassTable}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Listing ID</th>
-                  <th>Listing Type</th>
-                  <th>Status</th>
-                  <th># Sqft</th>
-                  <th>Landlord</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredListings.map((listing) => (
-                  <tr key={listing.id}>
-                    {/* Inline Editable cell: Name */}
-                    <td 
-                      onClick={() => setEditingCell({ id: listing.id, col: 'name' })}
-                      className={styles.editableCell}
+              {/* Top Search bar, Filters and Add Listing pill */}
+              <div className={styles.landlordFilterBar}>
+                <div className={styles.searchAndFilters}>
+                  <div className={styles.searchContainer}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" className={styles.searchIcon}>
+                      <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    <input 
+                      type="text" 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search listings..." 
+                      className={styles.searchInput}
+                    />
+                  </div>
+
+                  <div className={styles.dropdownFilters}>
+                    <select 
+                      value={landlordFilter} 
+                      onChange={(e) => setLandlordFilter(e.target.value)}
+                      className={styles.filterSelect}
                     >
-                      {editingCell?.id === listing.id && editingCell?.col === 'name' ? (
-                        <input 
-                          type="text" 
-                          defaultValue={listing.name}
-                          onBlur={(e) => {
-                            updateListingCell(listing.id, 'name', e.target.value);
-                            setEditingCell(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              updateListingCell(listing.id, 'name', e.target.value);
-                              setEditingCell(null);
-                            }
-                          }}
-                          autoFocus
-                          className={styles.inlineInput}
-                        />
-                      ) : (
-                        listing.name
-                      )}
-                    </td>
+                      <option value="All">Landlord: All</option>
+                      <option value="Pioneer Group">Pioneer Group</option>
+                      <option value="Nexus Leeds">Nexus Leeds</option>
+                    </select>
 
-                    <td><span className={styles.listingIdCode}>{listing.id}</span></td>
-
-                    {/* Inline Editable cell: Listing Type */}
-                    <td 
-                      onClick={() => setEditingCell({ id: listing.id, col: 'type' })}
-                      className={styles.editableCell}
+                    <select 
+                      value={typeFilter} 
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      className={styles.filterSelect}
                     >
-                      {editingCell?.id === listing.id && editingCell?.col === 'type' ? (
-                        <select 
-                          defaultValue={listing.type}
-                          onBlur={(e) => {
-                            updateListingCell(listing.id, 'type', e.target.value);
-                            setEditingCell(null);
-                          }}
-                          onChange={(e) => {
-                            updateListingCell(listing.id, 'type', e.target.value);
-                            setEditingCell(null);
-                          }}
-                          autoFocus
-                          className={styles.inlineSelect}
+                      <option value="All">Listing Type: All</option>
+                      <option value="Dry Lab">Dry Lab</option>
+                      <option value="Wet Lab">Wet Lab</option>
+                      <option value="Hybrid Lab">Hybrid Lab</option>
+                    </select>
+
+                    <select 
+                      value={statusFilter} 
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="All">Status: All</option>
+                      <option value="Available">Available</option>
+                      <option value="Under Offer">Under Offer</option>
+                      <option value="Let">Let</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button onClick={() => setShowAddChoice(true)} className={styles.primaryPill}>
+                  Add listing
+                </button>
+              </div>
+
+              {/* Apple-Style Liquid Glass Table */}
+              <div className={styles.tableWrapper}>
+                <table className={styles.glassTable}>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Listing ID</th>
+                      <th>Listing Type</th>
+                      <th>Status</th>
+                      <th># Sqft</th>
+                      <th>Landlord</th>
+                      <th>Floorplan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredListings.map((listing) => (
+                      <tr key={listing.id}>
+                        {/* Inline Editable cell: Name */}
+                        <td 
+                          onClick={() => setEditingCell({ id: listing.id, col: 'name' })}
+                          className={styles.editableCell}
                         >
-                          <option value="Dry Lab">Dry Lab</option>
-                          <option value="Wet Lab">Wet Lab</option>
-                          <option value="Hybrid Lab">Hybrid Lab</option>
-                        </select>
-                      ) : (
-                        <span className={styles.typeBadge}>{listing.type}</span>
-                      )}
-                    </td>
+                          {editingCell?.id === listing.id && editingCell?.col === 'name' ? (
+                            <input 
+                              type="text" 
+                              defaultValue={listing.name}
+                              onBlur={(e) => {
+                                updateListingCell(listing.id, 'name', e.target.value);
+                                setEditingCell(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  updateListingCell(listing.id, 'name', e.target.value);
+                                  setEditingCell(null);
+                                }
+                              }}
+                              autoFocus
+                              className={styles.inlineInput}
+                            />
+                          ) : (
+                            listing.name
+                          )}
+                        </td>
 
-                    {/* Inline Editable cell: Status */}
-                    <td 
-                      onClick={() => setEditingCell({ id: listing.id, col: 'status' })}
-                      className={styles.editableCell}
-                    >
-                      {editingCell?.id === listing.id && editingCell?.col === 'status' ? (
-                        <select 
-                          defaultValue={listing.status}
-                          onBlur={(e) => {
-                            updateListingCell(listing.id, 'status', e.target.value);
-                            setEditingCell(null);
-                          }}
-                          onChange={(e) => {
-                            updateListingCell(listing.id, 'status', e.target.value);
-                            setEditingCell(null);
-                          }}
-                          autoFocus
-                          className={styles.inlineSelect}
+                        <td><span className={styles.listingIdCode}>{listing.id}</span></td>
+
+                        {/* Inline Editable cell: Listing Type */}
+                        <td 
+                          onClick={() => setEditingCell({ id: listing.id, col: 'type' })}
+                          className={styles.editableCell}
                         >
-                          <option value="Available">Available</option>
-                          <option value="Under Offer">Under Offer</option>
-                          <option value="Let">Let</option>
-                        </select>
-                      ) : (
-                        <span className={`${styles.statusLabel} ${
-                          listing.status === 'Available' ? styles.statusAvail : 
-                          listing.status === 'Under Offer' ? styles.statusOffer : 
-                          styles.statusLet
-                        }`}>
-                          {listing.status}
-                        </span>
-                      )}
-                    </td>
+                          {editingCell?.id === listing.id && editingCell?.col === 'type' ? (
+                            <select 
+                              defaultValue={listing.type}
+                              onBlur={(e) => {
+                                updateListingCell(listing.id, 'type', e.target.value);
+                                setEditingCell(null);
+                              }}
+                              onChange={(e) => {
+                                updateListingCell(listing.id, 'type', e.target.value);
+                                setEditingCell(null);
+                              }}
+                              autoFocus
+                              className={styles.inlineSelect}
+                            >
+                              <option value="Dry Lab">Dry Lab</option>
+                              <option value="Wet Lab">Wet Lab</option>
+                              <option value="Hybrid Lab">Hybrid Lab</option>
+                            </select>
+                          ) : (
+                            <span className={styles.typeBadge}>{listing.type}</span>
+                          )}
+                        </td>
 
-                    {/* Inline Editable cell: Sqft */}
-                    <td 
-                      onClick={() => setEditingCell({ id: listing.id, col: 'sqft' })}
-                      className={styles.editableCell}
-                    >
-                      {editingCell?.id === listing.id && editingCell?.col === 'sqft' ? (
-                        <input 
-                          type="number" 
-                          defaultValue={listing.sqft}
-                          onBlur={(e) => {
-                            updateListingCell(listing.id, 'sqft', e.target.value);
-                            setEditingCell(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              updateListingCell(listing.id, 'sqft', e.target.value);
-                              setEditingCell(null);
-                            }
-                          }}
-                          autoFocus
-                          className={styles.inlineInput}
-                        />
-                      ) : (
-                        listing.sqft.toLocaleString()
-                      )}
-                    </td>
+                        {/* Inline Editable cell: Status */}
+                        <td 
+                          onClick={() => setEditingCell({ id: listing.id, col: 'status' })}
+                          className={styles.editableCell}
+                        >
+                          {editingCell?.id === listing.id && editingCell?.col === 'status' ? (
+                            <select 
+                              defaultValue={listing.status}
+                              onBlur={(e) => {
+                                updateListingCell(listing.id, 'status', e.target.value);
+                                setEditingCell(null);
+                              }}
+                              onChange={(e) => {
+                                updateListingCell(listing.id, 'status', e.target.value);
+                                setEditingCell(null);
+                              }}
+                              autoFocus
+                              className={styles.inlineSelect}
+                            >
+                              <option value="Available">Available</option>
+                              <option value="Under Offer">Under Offer</option>
+                              <option value="Let">Let</option>
+                            </select>
+                          ) : (
+                            <span className={`${styles.statusLabel} ${
+                              listing.status === 'Available' ? styles.statusAvail : 
+                              listing.status === 'Under Offer' ? styles.statusOffer : 
+                              styles.statusLet
+                            }`}>
+                              {listing.status}
+                            </span>
+                          )}
+                        </td>
 
-                    <td><span className={styles.landlordBadge}>{listing.landlord}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        {/* Inline Editable cell: Sqft */}
+                        <td 
+                          onClick={() => setEditingCell({ id: listing.id, col: 'sqft' })}
+                          className={styles.editableCell}
+                        >
+                          {editingCell?.id === listing.id && editingCell?.col === 'sqft' ? (
+                            <input 
+                              type="number" 
+                              defaultValue={listing.sqft}
+                              onBlur={(e) => {
+                                updateListingCell(listing.id, 'sqft', e.target.value);
+                                setEditingCell(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  updateListingCell(listing.id, 'sqft', e.target.value);
+                                  setEditingCell(null);
+                                }
+                              }}
+                              autoFocus
+                              className={styles.inlineInput}
+                            />
+                          ) : (
+                            listing.sqft.toLocaleString()
+                          )}
+                        </td>
+
+                        <td><span className={styles.landlordBadge}>{listing.landlord}</span></td>
+
+                        {/* Floorplan Upload Action Button */}
+                        <td>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); alert('Floorplan upload dialogue incoming.'); }}
+                            className={styles.uploadFloorplanPill}
+                          >
+                            <svg viewBox="0 0 24 24" width="12" height="12">
+                              <path fill="currentColor" d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                            </svg>
+                            Upload
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* LANDLORD STATE 3: ENQUIRIES VIEW */}
+          {landlordTab === 'enquiries' && (
+            <div className={styles.listingsViewWrapper}>
+              <div className={styles.viewHeader}>
+                <button onClick={() => setLandlordTab('hub')} className={styles.backBtn}>
+                  &larr; Back to Hub
+                </button>
+                <h1 className={styles.viewTitle}>Booked Call Enquiries</h1>
+              </div>
+
+              {/* Apple-Style Enquiries Table */}
+              <div className={styles.tableWrapper}>
+                <table className={styles.glassTable}>
+                  <thead>
+                    <tr>
+                      <th>Startup Contact</th>
+                      <th>Company</th>
+                      <th>Email</th>
+                      <th>Target Location</th>
+                      <th>Lab Type Needed</th>
+                      <th>Listing ID</th>
+                      <th>Date Booked</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {enquiries.map((enq) => (
+                      <tr key={enq.id}>
+                        <td><span className={styles.accountName}>{enq.startupName}</span></td>
+                        <td><span className={styles.landlordBadge}>{enq.company}</span></td>
+                        <td><a href={`mailto:${enq.email}`} className={styles.specEmail}>{enq.email}</a></td>
+                        <td><span className={styles.typeBadge}>{enq.targetLocation}</span></td>
+                        <td><span className={styles.typeBadge}>{enq.labType}</span></td>
+                        <td><span className={styles.listingIdCode}>{enq.listingId}</span></td>
+                        <td>{enq.date}</td>
+                        <td>
+                          <span className={`${styles.statusLabel} ${styles.statusAvail}`}>
+                            {enq.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </main>
       )}
 
@@ -778,7 +908,6 @@ export default function Dashboard() {
               </div>
               
               <div className={styles.choiceButtons}>
-                {/* Upload button with hover info tooltip */}
                 <div className={styles.uploadBtnWrapper}>
                   <button onClick={handleFileUploadSimulate} className={styles.choiceBtn}>
                     Upload Document
@@ -836,7 +965,12 @@ export default function Dashboard() {
       <AnimatePresence>
         {showManualForm && (
           <div className={styles.modalOverlay}>
-            <motion.div className={styles.modalCard} initial={{ opacity: 0, y: 20 }}>
+            <motion.div 
+              className={styles.modalCardManual}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            >
               <div className={styles.modalHeader}>
                 <h3 className={styles.modalTitle}>Enter Listing Specifications</h3>
                 <button onClick={() => setShowManualForm(false)} className={styles.closeBtn}>&times;</button>
