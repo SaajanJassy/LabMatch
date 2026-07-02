@@ -94,10 +94,11 @@ export default function ThreeFloorPlan() {
       floorPlanGroup.add(wallGroup);
     }
 
-    // Helper: Add lab bench as a subgroup
+    // Helper: Add lab bench as a subgroup, now complete with detailed overhead reagent shelves
     function addBench(x, z, w, d, h = 0.5) {
       const benchGroup = new THREE.Group();
       
+      // Base table
       const geometry = new THREE.BoxGeometry(w, h, d);
       const mesh = new THREE.Mesh(geometry, benchMaterial);
       mesh.position.set(0, h / 2, 0);
@@ -108,6 +109,44 @@ export default function ThreeFloorPlan() {
       line.position.copy(mesh.position);
       benchGroup.add(line);
 
+      // --- Overhead Reagent Shelving Units ---
+      const postW = 0.03;
+      const postH = 0.8;
+      const postGeom = new THREE.BoxGeometry(postW, postH, d - 0.05);
+      
+      // Left vertical post
+      const postLeft = new THREE.Mesh(postGeom, benchMaterial);
+      postLeft.position.set(-w/2 + 0.05, h + postH/2, 0);
+      benchGroup.add(postLeft);
+      const postLeftLine = new THREE.LineSegments(new THREE.EdgesGeometry(postGeom), benchLineMaterial);
+      postLeftLine.position.copy(postLeft.position);
+      benchGroup.add(postLeftLine);
+
+      // Right vertical post
+      const postRight = new THREE.Mesh(postGeom, benchMaterial);
+      postRight.position.set(w/2 - 0.05, h + postH/2, 0);
+      benchGroup.add(postRight);
+      const postRightLine = new THREE.LineSegments(new THREE.EdgesGeometry(postGeom), benchLineMaterial);
+      postRightLine.position.copy(postRight.position);
+      benchGroup.add(postRightLine);
+
+      // Horizontal Shelf 1
+      const shelfGeom = new THREE.BoxGeometry(w - 0.1, 0.03, 0.25);
+      const shelf1 = new THREE.Mesh(shelfGeom, benchMaterial);
+      shelf1.position.set(0, h + 0.35, 0);
+      benchGroup.add(shelf1);
+      const shelf1Line = new THREE.LineSegments(new THREE.EdgesGeometry(shelfGeom), benchLineMaterial);
+      shelf1Line.position.copy(shelf1.position);
+      benchGroup.add(shelf1Line);
+
+      // Horizontal Shelf 2
+      const shelf2 = new THREE.Mesh(shelfGeom, benchMaterial);
+      shelf2.position.set(0, h + 0.7, 0);
+      benchGroup.add(shelf2);
+      const shelf2Line = new THREE.LineSegments(new THREE.EdgesGeometry(shelfGeom), benchLineMaterial);
+      shelf2Line.position.copy(shelf2.position);
+      benchGroup.add(shelf2Line);
+
       benchGroup.position.set(x, 0, z);
       benchGroup.userData = {
         baseX: x,
@@ -117,6 +156,86 @@ export default function ThreeFloorPlan() {
       };
       
       floorPlanGroup.add(benchGroup);
+    }
+
+    // Helper: Add sink and faucet tap
+    function addSink(x, z, w = 0.5, d = 0.5) {
+      const sinkGroup = new THREE.Group();
+      const h = 0.5;
+
+      const geometry = new THREE.BoxGeometry(w, h, d);
+      const mesh = new THREE.Mesh(geometry, benchMaterial);
+      mesh.position.set(0, h / 2, 0);
+      sinkGroup.add(mesh);
+
+      const edges = new THREE.EdgesGeometry(geometry);
+      const line = new THREE.LineSegments(edges, lineMaterial);
+      line.position.copy(mesh.position);
+      sinkGroup.add(line);
+
+      // Faucet tap (L-shaped tube)
+      const faucetGeom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, h, 0),
+        new THREE.Vector3(0, h + 0.25, 0),
+        new THREE.Vector3(-0.1, h + 0.25, 0),
+        new THREE.Vector3(-0.1, h + 0.2, 0)
+      ]);
+      const faucetLine = new THREE.Line(faucetGeom, lineMaterial);
+      sinkGroup.add(faucetLine);
+
+      sinkGroup.position.set(x, 0, z);
+      sinkGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: 'bench',
+      };
+      floorPlanGroup.add(sinkGroup);
+    }
+
+    // Helper: Add desktop computer workstation
+    function addComputer(x, z, angle = 0) {
+      const pcGroup = new THREE.Group();
+      
+      // Monitor
+      const monW = 0.45;
+      const monH = 0.3;
+      const monD = 0.03;
+      const monGeom = new THREE.BoxGeometry(monW, monH, monD);
+      const monMesh = new THREE.Mesh(monGeom, benchMaterial);
+      monMesh.position.set(0, 0.35, 0);
+      pcGroup.add(monMesh);
+      const monLine = new THREE.LineSegments(new THREE.EdgesGeometry(monGeom), benchLineMaterial);
+      monLine.position.copy(monMesh.position);
+      pcGroup.add(monLine);
+
+      // Stand
+      const standGeom = new THREE.CylinderGeometry(0.02, 0.02, 0.2, 6);
+      const standMesh = new THREE.Mesh(standGeom, benchMaterial);
+      standMesh.position.set(0, 0.1, 0);
+      pcGroup.add(standMesh);
+      const standLine = new THREE.LineSegments(new THREE.EdgesGeometry(standGeom), benchLineMaterial);
+      standLine.position.copy(standMesh.position);
+      pcGroup.add(standLine);
+
+      // Keyboard
+      const kbGeom = new THREE.BoxGeometry(0.35, 0.02, 0.12);
+      const kbMesh = new THREE.Mesh(kbGeom, benchMaterial);
+      kbMesh.position.set(0, 0.01, 0.18);
+      pcGroup.add(kbMesh);
+      const kbLine = new THREE.LineSegments(new THREE.EdgesGeometry(kbGeom), benchLineMaterial);
+      kbLine.position.copy(kbMesh.position);
+      pcGroup.add(kbLine);
+
+      pcGroup.position.set(x, 0, z);
+      pcGroup.rotation.y = angle;
+      pcGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: 'bench',
+      };
+      floorPlanGroup.add(pcGroup);
     }
 
     // Helper: Add stool/chair
@@ -252,28 +371,41 @@ export default function ThreeFloorPlan() {
     addWall(2.2, 1.8, 1.2, thickness, 1.2, 'inner_wall');
     addWall(2.2, -1.8, 1.2, thickness, 1.2, 'inner_wall');
 
-    // 5. Furniture (Benches, Chairs, and Equipment)
-    // Left Labs Benches
+    // 5. Furniture (Benches, Chairs, Equipment, Sinks, and Computers)
+    // Left Lab Zone
     for (let z = -2.2; z <= 2.2; z += 1.1) {
       addBench(-9.2, z, 1.4, 0.4);
       addBench(-5.8, z, 1.4, 0.4);
       
-      // Chairs next to the benches
+      // Chairs for lab technicians
       addChair(-8.3, z);
       addChair(-6.7, z);
+
+      // Add a computer monitor on every second bench
+      if (Math.abs(z) < 1.5) {
+        addComputer(-9.2, z + 0.1, Math.PI / 2);
+      }
     }
+    // Sinks at the ends of left benches
+    addSink(-9.2, -3.2, 0.4, 0.4);
+    addSink(-5.8, 3.2, 0.4, 0.4);
     
-    // Right Labs Benches
+    // Right Lab Zone
     for (let z = -2.2; z <= 2.2; z += 1.1) {
       addBench(9.2, z, 1.4, 0.4);
       addChair(8.3, z);
+      
+      // Computers facing the desk chairs
+      addComputer(9.2, z - 0.1, -Math.PI / 2);
     }
+    // Sink at the end of right bench
+    addSink(9.2, -3.2, 0.4, 0.4);
 
     // Heavy lab equipment (biosafety cabinets, diagnostic units, columns)
-    addEquipment(-10.5, -3.5, 0.8, 0.8, 1.0); // Fume hood back-left
-    addEquipment(-4.5, -3.5, 1.0, 0.8, 0.95);
-    addEquipment(10.5, 3.5, 0.8, 0.8, 1.0);   // Diagnostic unit right
-    addEquipment(4.5, 3.5, 1.0, 0.8, 0.95);
+    addEquipment(-10.5, -3.8, 0.7, 0.7, 1.1); // Back-left fume hood
+    addEquipment(-4.5, -3.8, 0.9, 0.7, 1.0);  // Cleanroom equipment box
+    addEquipment(10.5, 3.8, 0.7, 0.7, 1.1);   // Right diagnostic unit
+    addEquipment(4.5, 3.8, 0.9, 0.7, 1.0);    // Fume hood right
 
     // Offset parent group slightly
     floorPlanGroup.position.set(0, -0.5, 0);
