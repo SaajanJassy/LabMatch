@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 /**
- * ThreeFloorPlan: Renders a 3D architectural model of the LabMatch floor plan
- * with a clean, hand-drawn wireframe/pencil style. Rotates slowly on the Y axis.
+ * ThreeFloorPlan: Renders a 3D architectural model of the LabMatch floor plan.
+ * The model rotates slowly, and cleanly explodes (exploded CAD view) as the user scrolls.
  */
 export default function ThreeFloorPlan() {
   const containerRef = useRef(null);
@@ -17,7 +17,7 @@ export default function ThreeFloorPlan() {
     
     const scene = new THREE.Scene();
     
-    // Orthographic or Perspective camera for architectural look
+    // Perspective camera for premium architectural depth
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
     camera.position.set(0, 16, 22);
     camera.lookAt(0, 0, 0);
@@ -36,7 +36,6 @@ export default function ThreeFloorPlan() {
     scene.add(dirLight);
 
     // --- Materials ---
-    // Solid fill for walls (matches beige background)
     const wallMaterial = new THREE.MeshBasicMaterial({
       color: 0xf2ece2, // var(--linen)
       polygonOffset: true,
@@ -44,13 +43,11 @@ export default function ThreeFloorPlan() {
       polygonOffsetUnits: 1,
     });
 
-    // Dark slate pencil-like material for edges
     const lineMaterial = new THREE.LineBasicMaterial({
       color: 0x2d5a3d, // var(--forest)
       linewidth: 1.5,
     });
 
-    // Lab bench material
     const benchMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       polygonOffset: true,
@@ -66,54 +63,75 @@ export default function ThreeFloorPlan() {
     const floorPlanGroup = new THREE.Group();
     scene.add(floorPlanGroup);
 
-    // Helper: Add wall segment (box + outlines)
-    function addWall(x, z, w, d, h = 1.2) {
+    // Helper: Add wall segment as a subgroup
+    function addWall(x, z, w, d, h = 1.2, type = 'inner_wall') {
+      const wallGroup = new THREE.Group();
+      
       const geometry = new THREE.BoxGeometry(w, h, d);
       const mesh = new THREE.Mesh(geometry, wallMaterial);
-      mesh.position.set(x, h / 2, z);
-      floorPlanGroup.add(mesh);
+      mesh.position.set(0, h / 2, 0); // local offset
+      wallGroup.add(mesh);
 
-      // Add wireframe outlines
       const edges = new THREE.EdgesGeometry(geometry);
       const line = new THREE.LineSegments(edges, lineMaterial);
       line.position.copy(mesh.position);
-      floorPlanGroup.add(line);
+      wallGroup.add(line);
+
+      wallGroup.position.set(x, 0, z);
+      wallGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: type,
+      };
+      
+      floorPlanGroup.add(wallGroup);
     }
 
-    // Helper: Add lab bench
+    // Helper: Add lab bench as a subgroup
     function addBench(x, z, w, d, h = 0.5) {
+      const benchGroup = new THREE.Group();
+      
       const geometry = new THREE.BoxGeometry(w, h, d);
       const mesh = new THREE.Mesh(geometry, benchMaterial);
-      mesh.position.set(x, h / 2, z);
-      floorPlanGroup.add(mesh);
+      mesh.position.set(0, h / 2, 0);
+      benchGroup.add(mesh);
 
       const edges = new THREE.EdgesGeometry(geometry);
       const line = new THREE.LineSegments(edges, benchLineMaterial);
       line.position.copy(mesh.position);
-      floorPlanGroup.add(line);
+      benchGroup.add(line);
+
+      benchGroup.position.set(x, 0, z);
+      benchGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: 'bench',
+      };
+      
+      floorPlanGroup.add(benchGroup);
     }
 
-    // --- Build Floor Plan Structure ---
-    // Outer dimensions: approx 22m x 10m
+    // --- Build Structure ---
     const outerW = 22;
     const outerH = 9.5;
     const thickness = 0.2;
 
-    // 1. Outer Boundaries
-    addWall(0, -outerH/2, outerW, thickness); // Back
-    addWall(0, outerH/2, outerW, thickness);  // Front
-    addWall(-outerW/2, 0, thickness, outerH); // Left
-    addWall(outerW/2, 0, thickness, outerH);  // Right
+    // 1. Outer boundaries (categorised for directional explosion)
+    addWall(0, -outerH/2, outerW, thickness, 1.2, 'outer_back');
+    addWall(0, outerH/2, outerW, thickness, 1.2, 'outer_front');
+    addWall(-outerW/2, 0, thickness, outerH, 1.2, 'outer_left');
+    addWall(outerW/2, 0, thickness, outerH, 1.2, 'outer_right');
 
-    // 2. Central Square Atrium (x = -0.5, size = 3 x 3)
+    // 2. Square Atrium
     const atW = 3.5;
     const atH = 3.5;
-    addWall(-0.5, -atH/2, atW, thickness);
-    addWall(-0.5, atH/2, atW, thickness);
-    addWall(-0.5 - atW/2, 0, thickness, atH);
-    addWall(-0.5 + atW/2, 0, thickness, atH);
+    addWall(-0.5, -atH/2, atW, thickness, 1.2, 'atrium_wall');
+    addWall(-0.5, atH/2, atW, thickness, 1.2, 'atrium_wall');
+    addWall(-0.5 - atW/2, 0, thickness, atH, 1.2, 'atrium_wall');
+    addWall(-0.5 + atW/2, 0, thickness, atH, 1.2, 'atrium_wall');
 
-    // Diagonal lines in Square Atrium
     const diagGeom1 = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-0.5 - atW/2, 0.02, -atH/2),
       new THREE.Vector3(-0.5 + atW/2, 0.02, atH/2)
@@ -122,11 +140,14 @@ export default function ThreeFloorPlan() {
       new THREE.Vector3(-0.5 - atW/2, 0.02, atH/2),
       new THREE.Vector3(-0.5 + atW/2, 0.02, -atH/2)
     ]);
-    floorPlanGroup.add(new THREE.Line(diagGeom1, lineMaterial));
-    floorPlanGroup.add(new THREE.Line(diagGeom2, lineMaterial));
+    
+    const atriumLines = new THREE.Group();
+    atriumLines.add(new THREE.Line(diagGeom1, lineMaterial));
+    atriumLines.add(new THREE.Line(diagGeom2, lineMaterial));
+    atriumLines.userData = { baseX: 0, baseY: 0, baseZ: 0, type: 'atrium_line' };
+    floorPlanGroup.add(atriumLines);
 
-    // 3. Right Courtyard (Oval structure centered at x = 5)
-    // We approximate the oval using wall segments
+    // 3. Oval Courtyard
     const ovalX = 5;
     const segments = 16;
     const rx = 1.6;
@@ -140,40 +161,39 @@ export default function ThreeFloorPlan() {
     }
     const ovalGeom = new THREE.BufferGeometry().setFromPoints(ovalPoints);
     const ovalLine = new THREE.Line(ovalGeom, lineMaterial);
-    floorPlanGroup.add(ovalLine);
-
-    // 4. Vertical & Horizontal Room Dividers (Corridors)
-    // Left side lab dividers
-    addWall(-7.5, 0, thickness, 5.5);
-    addWall(-10.5, -0.5, 3.8, thickness);
-    addWall(-4.5, -0.5, 5.8, thickness);
-    addWall(-7.5, -3.2, 5.8, thickness);
-    addWall(-7.5, 2.8, 5.8, thickness);
     
-    // Right side lab dividers
-    addWall(7.5, 0, thickness, 5.5);
-    addWall(10.5, -0.5, 3.8, thickness);
-    addWall(7.5, -3.2, 5.8, thickness);
-    addWall(7.5, 2.8, 5.8, thickness);
-    
-    // Lift shafts & utility cores (center areas)
-    addWall(-2.8, 1.8, 1.2, thickness);
-    addWall(-2.8, -1.8, 1.2, thickness);
-    addWall(2.2, 1.8, 1.2, thickness);
-    addWall(2.2, -1.8, 1.2, thickness);
+    const ovalGroup = new THREE.Group();
+    ovalGroup.add(ovalLine);
+    ovalGroup.userData = { baseX: 0, baseY: 0, baseZ: 0, type: 'atrium_line' };
+    floorPlanGroup.add(ovalGroup);
 
-    // 5. Lab Benches & Furniture
-    // Left Labs Benches
+    // 4. Room dividers (Inner walls)
+    addWall(-7.5, 0, thickness, 5.5, 1.2, 'inner_wall');
+    addWall(-10.5, -0.5, 3.8, thickness, 1.2, 'inner_wall');
+    addWall(-4.5, -0.5, 5.8, thickness, 1.2, 'inner_wall');
+    addWall(-7.5, -3.2, 5.8, thickness, 1.2, 'inner_wall');
+    addWall(-7.5, 2.8, 5.8, thickness, 1.2, 'inner_wall');
+    
+    addWall(7.5, 0, thickness, 5.5, 1.2, 'inner_wall');
+    addWall(10.5, -0.5, 3.8, thickness, 1.2, 'inner_wall');
+    addWall(7.5, -3.2, 5.8, thickness, 1.2, 'inner_wall');
+    addWall(7.5, 2.8, 5.8, thickness, 1.2, 'inner_wall');
+    
+    addWall(-2.8, 1.8, 1.2, thickness, 1.2, 'inner_wall');
+    addWall(-2.8, -1.8, 1.2, thickness, 1.2, 'inner_wall');
+    addWall(2.2, 1.8, 1.2, thickness, 1.2, 'inner_wall');
+    addWall(2.2, -1.8, 1.2, thickness, 1.2, 'inner_wall');
+
+    // 5. Furniture (Benches)
     for (let z = -2.2; z <= 2.2; z += 1.1) {
       addBench(-9.2, z, 1.4, 0.4);
       addBench(-5.8, z, 1.4, 0.4);
     }
-    // Right Labs Benches
     for (let z = -2.2; z <= 2.2; z += 1.1) {
       addBench(9.2, z, 1.4, 0.4);
     }
 
-    // Centring offsets
+    // Offset parent group slightly
     floorPlanGroup.position.set(0, -0.5, 0);
 
     // --- Animation Loop ---
@@ -181,8 +201,49 @@ export default function ThreeFloorPlan() {
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      // Slow, smooth rotation along central Y axis
+      // 1. Slow, continuous Y-axis rotation
       floorPlanGroup.rotation.y += 0.002;
+
+      // 2. Clean scroll-driven explosion animation
+      const scrollFraction = Math.min(1, window.scrollY / window.innerHeight);
+
+      floorPlanGroup.children.forEach((child) => {
+        if (!child.userData || !child.userData.type) return;
+
+        const { baseX, baseY, baseZ, type } = child.userData;
+
+        if (type === 'outer_back') {
+          // Push backward on Z, raise on Y
+          child.position.z = baseZ - 4.5 * scrollFraction;
+          child.position.y = baseY + 1.2 * scrollFraction;
+        } else if (type === 'outer_front') {
+          // Push forward on Z, raise on Y
+          child.position.z = baseZ + 4.5 * scrollFraction;
+          child.position.y = baseY + 1.2 * scrollFraction;
+        } else if (type === 'outer_left') {
+          // Push left on X, raise on Y
+          child.position.x = baseX - 5.5 * scrollFraction;
+          child.position.y = baseY + 1.2 * scrollFraction;
+        } else if (type === 'outer_right') {
+          // Push right on X, raise on Y
+          child.position.x = baseX + 5.5 * scrollFraction;
+          child.position.y = baseY + 1.2 * scrollFraction;
+        } else if (type === 'inner_wall') {
+          // Lift room dividers straight up cleanly
+          child.position.y = baseY + 5.5 * scrollFraction;
+        } else if (type === 'atrium_wall') {
+          // Lift atrium walls up at a distinct rate
+          child.position.y = baseY + 4.0 * scrollFraction;
+        } else if (type === 'atrium_line') {
+          // Sink lines downwards to ground plane
+          child.position.y = baseY - 2.5 * scrollFraction;
+        } else if (type === 'bench') {
+          // Slide furniture slightly outward on X axis, raise slightly
+          const driftDirX = baseX > 0 ? 1 : -1;
+          child.position.x = baseX + 2.0 * driftDirX * scrollFraction;
+          child.position.y = baseY + 0.3 * scrollFraction;
+        }
+      });
 
       renderer.render(scene, camera);
     };
