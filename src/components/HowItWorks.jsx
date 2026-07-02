@@ -1,13 +1,13 @@
 import { motion } from 'framer-motion';
 import { glowMove } from '../utils/glow';
-import SketchedFlask from './SketchedFlask';
-import SketchedBuilding from './SketchedBuilding';
+import flaskSketch from '../assets/flask-sketch.jpg';
+import buildingSketch from '../assets/building-sketch.jpg';
 import styles from './HowItWorks.module.css';
 
 /**
  * HowItWorks: Two sections showing the step-by-step process
  * for startups (sand background) and landlords (white background).
- * Includes two-column layouts featuring animating vector sketches.
+ * Includes two-column layouts featuring custom architectural sketches with clip-path draw animations.
  */
 
 const startupSteps = [
@@ -88,6 +88,15 @@ function Step({ step, index, direction = 'left' }) {
 }
 
 export default function HowItWorks() {
+  const sketchAnimation = {
+    hidden: { clipPath: 'inset(0% 100% 0% 0%)', opacity: 0.8 },
+    visible: {
+      clipPath: 'inset(0% 0% 0% 0%)',
+      opacity: 1,
+      transition: { duration: 1.5, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
+
   return (
     <>
       {/* Startups section */}
@@ -108,17 +117,19 @@ export default function HowItWorks() {
             </div>
 
             {/* Sketch Column */}
-            <motion.div 
-              className={styles.columnVisual}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: 'easeOut' }}
-              viewport={{ once: false, margin: '-50px' }}
-            >
+            <div className={styles.columnVisual}>
               <div className={`${styles.sketchCard} glow`} onMouseMove={glowMove}>
-                <SketchedFlask />
+                <motion.img 
+                  src={flaskSketch} 
+                  alt="Original detailed pencil sketch of biology flask and DNA helix"
+                  className={styles.sketchImage}
+                  variants={sketchAnimation}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: false, margin: '-80px' }}
+                />
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -128,17 +139,19 @@ export default function HowItWorks() {
         <div className="section-container">
           <div className={styles.grid}>
             {/* Sketch Column (Left on desktop) */}
-            <motion.div 
-              className={`${styles.columnVisual} ${styles.orderMobileSecond}`}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: 'easeOut' }}
-              viewport={{ once: false, margin: '-50px' }}
-            >
+            <div className={`${styles.columnVisual} ${styles.orderMobileSecond}`}>
               <div className={`${styles.sketchCard} glow`} onMouseMove={glowMove}>
-                <SketchedBuilding />
+                <motion.img 
+                  src={buildingSketch} 
+                  alt="Original detailed pencil sketch of modern lab building"
+                  className={styles.sketchImage}
+                  variants={sketchAnimation}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: false, margin: '-80px' }}
+                />
               </div>
-            </motion.div>
+            </div>
 
             {/* Steps column */}
             <div className={styles.columnSteps}>
