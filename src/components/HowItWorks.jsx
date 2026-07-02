@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { glowMove } from '../utils/glow';
 import flaskSketch from '../assets/flask-sketch.jpg';
 import buildingSketch from '../assets/building-sketch.jpg';
@@ -112,7 +113,7 @@ export default function HowItWorks() {
                 ))}
               </div>
               <div className={styles.ctaWrapper}>
-                <a href="#contact" className="cta-button">Find your lab</a>
+                <Link to="/login?role=startup" className="cta-button">Find your lab</Link>
               </div>
             </div>
 
@@ -162,9 +163,9 @@ export default function HowItWorks() {
                 ))}
               </div>
               <div className={styles.ctaWrapper}>
-                <a href="#contact" className="cta-button cta-button--outline">
+                <Link to="/login?role=landlord" className="cta-button cta-button--outline">
                   List your lab
-                </a>
+                </Link>
               </div>
             </div>
           </div>

@@ -50,7 +50,7 @@ export default function ThreeFloorPlan() {
     });
 
     const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x2d5a3d, // var(--forest)
+      color: 0x3c763d, // var(--forest)
       linewidth: 1.5,
     });
 

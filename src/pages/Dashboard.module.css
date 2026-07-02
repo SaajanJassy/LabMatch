@@ -1,0 +1,160 @@
+.container {
+  min-height: 100vh;
+  background-color: var(--sand);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar {
+  height: var(--nav-height);
+  background-color: var(--white);
+  border-bottom: 1px solid rgba(168, 159, 145, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5%;
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--forest);
+}
+
+.userNav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.userGreeting {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.userName {
+  font-weight: 700;
+}
+
+.badge {
+  background-color: var(--linen);
+  color: var(--forest);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.logoutBtn {
+  background-color: transparent;
+  border: 1px solid rgba(168, 159, 145, 0.4);
+  color: var(--ink);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logoutBtn:hover {
+  background-color: var(--sand);
+  border-color: var(--stone);
+}
+
+.mainContent {
+  flex: 1;
+  max-width: var(--max-width);
+  width: 90%;
+  margin: var(--space-lg) auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.headerSection {
+  margin-bottom: var(--space-sm);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  color: var(--stone);
+  font-size: 1.05rem;
+}
+
+.workspace {
+  background-color: var(--white);
+  border-radius: 12px;
+  padding: var(--space-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.placeholderCard {
+  background-color: var(--sand);
+  border-radius: 8px;
+  padding: var(--space-md);
+}
+
+.cardOutline {
+  border: 2px dashed rgba(168, 159, 145, 0.4);
+  border-radius: 6px;
+  height: 100%;
+}
+
+.dashedBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg) var(--space-md);
+  text-align: center;
+  color: var(--stone);
+  gap: var(--space-sm);
+}
+
+.icon {
+  color: var(--forest);
+}
+
+.dashedBox h3 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  color: var(--ink);
+}
+
+.dashedBox p {
+  font-size: 0.9rem;
+  max-width: 240px;
+}
+
+.loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--sand);
+  font-size: 1.2rem;
+  color: var(--forest);
+  font-family: var(--font-heading);
+}
