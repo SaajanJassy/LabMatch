@@ -1,9 +1,13 @@
 import { motion } from 'framer-motion';
+import { glowMove } from '../utils/glow';
+import flaskSketch from '../assets/flask-sketch.jpg';
+import buildingSketch from '../assets/building-sketch.jpg';
 import styles from './HowItWorks.module.css';
 
 /**
  * HowItWorks: Two sections showing the step-by-step process
  * for startups (sand background) and landlords (white background).
+ * Includes two-column layouts featuring custom architectural sketches.
  */
 
 const startupSteps = [
@@ -62,10 +66,9 @@ const landlordSteps = [
 
 /**
  * Renders a single step row with scroll animation.
- * direction: 'left' slides in from left, 'right' from right.
  */
 function Step({ step, index, direction = 'left' }) {
-  const xOffset = direction === 'left' ? -40 : 40;
+  const xOffset = direction === 'left' ? -30 : 30;
 
   return (
     <motion.div
@@ -90,14 +93,36 @@ export default function HowItWorks() {
       {/* Startups section */}
       <section id="startups" className={`${styles.section} ${styles.sectionStartups}`}>
         <div className="section-container">
-          <h2 className={styles.heading}>How LabMatch works for startups</h2>
-          <div className={styles.steps}>
-            {startupSteps.map((step, i) => (
-              <Step key={step.number} step={step} index={i} direction="left" />
-            ))}
-          </div>
-          <div className={styles.ctaWrapper}>
-            <a href="#contact" className="cta-button">Find your lab</a>
+          <div className={styles.grid}>
+            {/* Steps column */}
+            <div className={styles.columnSteps}>
+              <h2 className={styles.heading}>How LabMatch works for startups</h2>
+              <div className={styles.steps}>
+                {startupSteps.map((step, i) => (
+                  <Step key={step.number} step={step} index={i} direction="left" />
+                ))}
+              </div>
+              <div className={styles.ctaWrapper}>
+                <a href="#contact" className="cta-button">Find your lab</a>
+              </div>
+            </div>
+
+            {/* Sketch Column */}
+            <motion.div 
+              className={styles.columnVisual}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              viewport={{ once: true, margin: '-50px' }}
+            >
+              <div className={`${styles.sketchCard} glow`} onMouseMove={glowMove}>
+                <img 
+                  src={flaskSketch} 
+                  alt="Sketch of a biology beaker, pipette and DNA helix" 
+                  className={styles.sketchImage} 
+                />
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -105,16 +130,38 @@ export default function HowItWorks() {
       {/* Landlords section */}
       <section id="landlords" className={`${styles.section} ${styles.sectionLandlords}`}>
         <div className="section-container">
-          <h2 className={styles.heading}>How LabMatch works for landlords</h2>
-          <div className={styles.steps}>
-            {landlordSteps.map((step, i) => (
-              <Step key={step.number} step={step} index={i} direction="right" />
-            ))}
-          </div>
-          <div className={styles.ctaWrapper}>
-            <a href="#contact" className="cta-button cta-button--outline">
-              List your lab
-            </a>
+          <div className={styles.grid}>
+            {/* Sketch Column (Left on desktop) */}
+            <motion.div 
+              className={`${styles.columnVisual} ${styles.orderMobileSecond}`}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              viewport={{ once: true, margin: '-50px' }}
+            >
+              <div className={`${styles.sketchCard} glow`} onMouseMove={glowMove}>
+                <img 
+                  src={buildingSketch} 
+                  alt="Sketch of a modern bio-research laboratory building" 
+                  className={styles.sketchImage} 
+                />
+              </div>
+            </motion.div>
+
+            {/* Steps column */}
+            <div className={styles.columnSteps}>
+              <h2 className={styles.heading}>How LabMatch works for landlords</h2>
+              <div className={styles.steps}>
+                {landlordSteps.map((step, i) => (
+                  <Step key={step.number} step={step} index={i} direction="right" />
+                ))}
+              </div>
+              <div className={styles.ctaWrapper}>
+                <a href="#contact" className="cta-button cta-button--outline">
+                  List your lab
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>

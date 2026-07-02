@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
+import { glowMove } from '../utils/glow';
 import styles from './Problem.module.css';
 
 /**
  * Problem: Three cards outlining why finding lab space is broken.
- * Cards animate in on scroll with staggered delays.
+ * Cards animate in on scroll with staggered delays and react to mouse moves with a border glow.
  */
 
 const problems = [
@@ -32,7 +33,8 @@ export default function Problem() {
           {problems.map((problem, i) => (
             <motion.div
               key={problem.title}
-              className={styles.card}
+              className={`${styles.card} glow`}
+              onMouseMove={glowMove}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: 'easeOut', delay: i * 0.15 }}

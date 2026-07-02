@@ -4,11 +4,12 @@ import Problem from './components/Problem';
 import HowItWorks from './components/HowItWorks';
 import Trust from './components/Trust';
 import Footer from './components/Footer';
+import SmoothScroll from './components/SmoothScroll';
 import { motion } from 'framer-motion';
 
 export default function App() {
   return (
-    <>
+    <SmoothScroll>
       <Navbar />
       <main>
         <Hero />
@@ -42,6 +43,6 @@ export default function App() {
         </section>
       </main>
       <Footer />
-    </>
+    </SmoothScroll>
   );
 }

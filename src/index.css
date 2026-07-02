@@ -8,10 +8,10 @@
   --ink: #1a1a1a;
   --forest: #2d5a3d;
   --forest-dark: #1e3d2a;
-  --sand: #f5f0e8;
-  --linen: #ebe5d9;
+  --sand: #faf6f0;
+  --linen: #f2ece2;
   --stone: #a89f91;
-  --white: #fefdfb;
+  --white: #ffffff;
 
   /* Typography */
   --font-heading: 'Playfair Display', Georgia, 'Times New Roman', serif;
@@ -146,6 +146,38 @@ button {
   color: var(--white);
 }
 
+/* ---- Cursor-Following Border Glow ---- */
+.glow {
+  position: relative;
+  border: 1px solid rgba(45, 90, 61, 0.08); /* default subtle border */
+}
+
+.glow::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: radial-gradient(
+    320px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(45, 90, 61, 0.5) 0%,
+    rgba(168, 159, 145, 0.2) 50%,
+    transparent 80%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.glow:hover::after {
+  opacity: 1;
+}
+
 /* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -160,3 +192,4 @@ button {
     scroll-behavior: auto;
   }
 }
+
