@@ -367,6 +367,12 @@ export default function Dashboard() {
 
   return (
     <div className={styles.container}>
+      {user.role === 'landlord' && (
+        <div className={styles.blobContainer}>
+          <div className={styles.blob1} />
+          <div className={styles.blob2} />
+        </div>
+      )}
       {/* Sleek, Modern Glassmorphism Navbar */}
       <nav className={styles.sleekNavbar}>
         <div className={styles.logo}>LabMatch.</div>
