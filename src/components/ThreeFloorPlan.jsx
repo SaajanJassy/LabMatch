@@ -204,8 +204,15 @@ export default function ThreeFloorPlan() {
       // 1. Slow, continuous Y-axis rotation
       floorPlanGroup.rotation.y += 0.002;
 
-      // 2. Clean scroll-driven explosion animation
-      const scrollFraction = Math.min(1, window.scrollY / window.innerHeight);
+      // 2. Clean scroll-driven explosion animation with an idle threshold
+      const rawScroll = window.scrollY / window.innerHeight;
+      const startThreshold = 0.15; // 15% threshold before starting explosion
+      
+      let scrollFraction = 0;
+      if (rawScroll > startThreshold) {
+        // Map scroll from 15% to 80% viewport height for a clean transition
+        scrollFraction = Math.min(1, (rawScroll - startThreshold) / (0.8 - startThreshold));
+      }
 
       floorPlanGroup.children.forEach((child) => {
         if (!child.userData || !child.userData.type) return;
