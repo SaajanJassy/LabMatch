@@ -1,0 +1,64 @@
+/* Trust section styles */
+
+.section {
+  background-color: var(--ink);
+  padding: var(--space-2xl) 0;
+  color: var(--sand);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.stat {
+  text-align: center;
+  padding: var(--space-lg) var(--space-md);
+  position: relative;
+}
+
+/* Vertical dividers on desktop */
+.stat:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: calc(var(--space-lg) * -0.5);
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background-color: rgba(168, 159, 145, 0.25); /* semi-transparent stone */
+}
+
+.statValue {
+  font-family: var(--font-heading);
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: var(--space-xs);
+  line-height: 1.2;
+}
+
+.statLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8rem;
+  color: var(--stone);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .stat {
+    padding: var(--space-md);
+  }
+
+  .stat:not(:last-child)::after {
+    display: none;
+  }
+}

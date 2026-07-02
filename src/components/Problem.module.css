@@ -1,0 +1,41 @@
+/* Problem section styles */
+
+.section {
+  padding: var(--space-2xl) 0;
+  background-color: var(--white);
+}
+
+.heading {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto var(--space-xl);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+}
+
+.card {
+  background-color: var(--linen);
+  border-radius: 8px;
+  padding: var(--space-lg);
+}
+
+.cardTitle {
+  margin-bottom: var(--space-sm);
+  color: var(--ink);
+}
+
+.cardBody {
+  color: #4a4640;
+  line-height: 1.75;
+  font-size: 0.975rem;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
