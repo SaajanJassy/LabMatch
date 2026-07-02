@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { glowMove } from '../utils/glow';
 import styles from './Dashboard.module.css';
 
-// Mock matches data matching screenshots
+// Startup mock matches data
 const mockMatches = [
   {
     id: 1,
@@ -86,6 +86,20 @@ const mockMatches = [
   }
 ];
 
+// Seed Landlord Listings data
+const initialLandlordListings = [
+  { id: 'rec5zhxbm', name: 'GOOD EXAMPLE', type: 'Dry Lab', status: 'Available', sqft: 500, landlord: 'Pioneer Group' },
+  { id: 'recbDIP80', name: 'GOOD EXAMPLE 2', type: 'Wet Lab', status: 'Available', sqft: 500, landlord: 'Nexus Leeds' },
+  { id: 'recc8GUeH', name: 'Demo Lab Space', type: 'Dry Lab', status: 'Let', sqft: 500, landlord: 'Pioneer Group' },
+  { id: 'recfK6r7H', name: 'PERFECT LAB', type: 'Dry Lab', status: 'Under Offer', sqft: 1000, landlord: 'Pioneer Group' },
+  { id: 'rechlQvjY', name: 'GOOD EXAMPLE 1', type: 'Wet Lab', status: 'Available', sqft: 500, landlord: 'Nexus Leeds' },
+  { id: 'recl5FpAm', name: 'BAD EXAMPLE', type: 'Hybrid Lab', status: 'Available', sqft: 300, landlord: 'Nexus Leeds' },
+  { id: 'recJgMMmx', name: 'MAKE TEST LAB', type: 'Dry Lab', status: 'Under Offer', sqft: 500, landlord: 'Pioneer Group' },
+  { id: 'reckx0ald', name: 'SUNDAY 1st Test', type: 'Dry Lab', status: 'Let', sqft: 500, landlord: 'Pioneer Group' },
+  { id: 'recM551gH', name: 'GOOD EXAMPLE 2', type: 'Dry Lab', status: 'Under Offer', sqft: 700, landlord: 'Pioneer Group' },
+  { id: 'recTjwBiL', name: 'Wet Lab VH-001', type: 'Wet Lab', status: 'Let', sqft: 700, landlord: 'Pioneer Group' }
+];
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -97,7 +111,7 @@ export default function Dashboard() {
   const [matchingProgress, setMatchingProgress] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Onboarding Form values
+  // Startup Onboarding Form values
   const [fundingStage, setFundingStage] = useState('Seed');
   const [targetSize, setTargetSize] = useState('');
   const [locationPreference, setLocationPreference] = useState('London');
@@ -105,6 +119,29 @@ export default function Dashboard() {
   const [pcrRequired, setPcrRequired] = useState(false);
   const [massSpecRequired, setMassSpecRequired] = useState(false);
   const [fumeHoodRequired, setFumeHoodRequired] = useState(false);
+
+  // Landlord Flow states
+  const [landlordListings, setLandlordListings] = useState([]);
+  const [showAddChoice, setShowAddChoice] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [showUploadLoader, setShowUploadLoader] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showPostAddMenu, setShowPostAddMenu] = useState(false);
+
+  // Search and Filters (Landlord Dashboard)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [landlordFilter, setLandlordFilter] = useState('All');
+  const [typeFilter, setTypeFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  // Manual Add Form values
+  const [newLabName, setNewLabName] = useState('');
+  const [newLabType, setNewLabType] = useState('Dry Lab');
+  const [newLabStatus, setNewLabStatus] = useState('Available');
+  const [newLabSqft, setNewLabSqft] = useState('');
+
+  // Inline edit cells state tracking (contains {rowId, colName})
+  const [editingCell, setEditingCell] = useState(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('labmatch_user');
@@ -115,22 +152,31 @@ export default function Dashboard() {
     const parsedUser = JSON.parse(savedUser);
     setUser(parsedUser);
 
-    // Check if user already has onboarding details saved
-    if (parsedUser.onboarding) {
-      setOnboardingCompleted(true);
-      // Retrieve values to pre-populate
-      const specs = parsedUser.onboarding;
-      setFundingStage(specs.fundingStage || 'Seed');
-      setTargetSize(specs.targetSize || '');
-      setLocationPreference(specs.locationPreference || 'London');
-      setLabType(specs.labType || 'Dry Lab');
-      setPcrRequired(specs.pcrRequired || false);
-      setMassSpecRequired(specs.massSpecRequired || false);
-      setFumeHoodRequired(specs.fumeHoodRequired || false);
+    if (parsedUser.role === 'startup') {
+      if (parsedUser.onboarding) {
+        setOnboardingCompleted(true);
+        const specs = parsedUser.onboarding;
+        setFundingStage(specs.fundingStage || 'Seed');
+        setTargetSize(specs.targetSize || '');
+        setLocationPreference(specs.locationPreference || 'London');
+        setLabType(specs.labType || 'Dry Lab');
+        setPcrRequired(specs.pcrRequired || false);
+        setMassSpecRequired(specs.massSpecRequired || false);
+        setFumeHoodRequired(specs.fumeHoodRequired || false);
+      }
+    } else if (parsedUser.role === 'landlord') {
+      // Load landlord listings from localstorage or use seeded initial data
+      const savedListings = localStorage.getItem('landlord_listings');
+      if (savedListings) {
+        setLandlordListings(JSON.parse(savedListings));
+      } else {
+        setLandlordListings(initialLandlordListings);
+        localStorage.setItem('landlord_listings', JSON.stringify(initialLandlordListings));
+      }
     }
   }, [navigate]);
 
-  // Simulate background matching calculations
+  // Simulate background matching calculations (Startup)
   const startMatchingSimulation = (specs) => {
     setShowOnboardingForm(false);
     setMatchingInProgress(true);
@@ -143,8 +189,6 @@ export default function Dashboard() {
           setTimeout(() => {
             setMatchingInProgress(false);
             setOnboardingCompleted(true);
-            
-            // Save specs to profile
             const updatedUser = { ...user, onboarding: specs };
             localStorage.setItem('labmatch_user', JSON.stringify(updatedUser));
             setUser(updatedUser);
@@ -170,6 +214,84 @@ export default function Dashboard() {
     startMatchingSimulation(specs);
   };
 
+  // Landlord: Upload document simulation
+  const handleFileUploadSimulate = (e) => {
+    e.preventDefault();
+    setShowAddChoice(false);
+    setShowUploadLoader(true);
+    setUploadProgress(0);
+
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setShowUploadLoader(false);
+            
+            // Add a mock parsed listing to the table
+            const randomId = 'rec' + Math.random().toString(36).substring(2, 8);
+            const newParsedListing = {
+              id: randomId,
+              name: 'Parsed Lab Suite ' + (landlordListings.length + 1),
+              type: 'Wet Lab',
+              status: 'Available',
+              sqft: 850,
+              landlord: user.organisation || 'Pioneer Group'
+            };
+            
+            const updatedListings = [newParsedListing, ...landlordListings];
+            setLandlordListings(updatedListings);
+            localStorage.setItem('landlord_listings', JSON.stringify(updatedListings));
+            
+            setShowPostAddMenu(true);
+          }, 600);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 100);
+  };
+
+  // Landlord: Manual submission
+  const handleManualListingSubmit = (e) => {
+    e.preventDefault();
+    const randomId = 'rec' + Math.random().toString(36).substring(2, 8);
+    const newListing = {
+      id: randomId,
+      name: newLabName || 'Unnamed Facility',
+      type: newLabType,
+      status: newLabStatus,
+      sqft: parseInt(newLabSqft) || 500,
+      landlord: user.organisation || 'Pioneer Group'
+    };
+
+    const updatedListings = [newListing, ...landlordListings];
+    setLandlordListings(updatedListings);
+    localStorage.setItem('landlord_listings', JSON.stringify(updatedListings));
+
+    // Clear form inputs
+    setNewLabName('');
+    setNewLabSqft('');
+    
+    setShowManualForm(false);
+    setShowPostAddMenu(true);
+  };
+
+  // Update a cell's value directly inline
+  const updateListingCell = (listingId, colName, newValue) => {
+    const updated = landlordListings.map(item => {
+      if (item.id === listingId) {
+        return {
+          ...item,
+          [colName]: colName === 'sqft' ? parseInt(newValue) || 0 : newValue
+        };
+      }
+      return item;
+    });
+    setLandlordListings(updated);
+    localStorage.setItem('landlord_listings', JSON.stringify(updated));
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('labmatch_user');
     navigate('/');
@@ -177,7 +299,6 @@ export default function Dashboard() {
 
   if (!user) return <div className={styles.loading}>Verifying credentials...</div>;
 
-  // Render the appropriate top-right avatar / org details in the sleek nav bar
   const renderUserPill = () => (
     <button 
       onClick={() => setDropdownOpen(!dropdownOpen)} 
@@ -198,6 +319,20 @@ export default function Dashboard() {
       </svg>
     </button>
   );
+
+  // Filter listings based on controls
+  const filteredListings = landlordListings.filter(item => {
+    const matchesSearch = 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.landlord.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    const matchesLandlord = landlordFilter === 'All' || item.landlord === landlordFilter;
+    const matchesType = typeFilter === 'All' || item.type === typeFilter;
+    const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
+
+    return matchesSearch && matchesLandlord && matchesType && matchesStatus;
+  });
 
   return (
     <div className={styles.container}>
@@ -230,23 +365,6 @@ export default function Dashboard() {
                       <span className={styles.dropdownLabel}>Email</span>
                       <span className={styles.dropdownValue}>{user.email}</span>
                     </div>
-                    {user.onboarding && (
-                      <>
-                        <div className={styles.dropdownDivider} />
-                        <div className={styles.dropdownRow}>
-                          <span className={styles.dropdownLabel}>Target Location</span>
-                          <span className={styles.dropdownValue}>{user.onboarding.locationPreference}</span>
-                        </div>
-                        <div className={styles.dropdownRow}>
-                          <span className={styles.dropdownLabel}>Required Size</span>
-                          <span className={styles.dropdownValue}>{user.onboarding.targetSize} sqft</span>
-                        </div>
-                        <div className={styles.dropdownRow}>
-                          <span className={styles.dropdownLabel}>Lab Type</span>
-                          <span className={styles.dropdownValue}>{user.onboarding.labType}</span>
-                        </div>
-                      </>
-                    )}
                   </div>
                   <div className={styles.dropdownFooter}>
                     <button onClick={handleLogout} className={styles.logoutBtn}>
@@ -260,166 +378,334 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <main className={styles.mainContent}>
-        {/* State 1: Matching loading state in the background */}
-        {matchingInProgress && (
-          <div className={styles.loaderContainer}>
-            <div className={styles.loaderSpinner}>
-              <svg className={styles.spinnerSvg} viewBox="0 0 100 100">
-                <circle className={styles.spinnerTrack} cx="50" cy="50" r="45" />
-                <circle 
-                  className={styles.spinnerFill} 
-                  cx="50" 
-                  cy="50" 
-                  r="45" 
-                  strokeDasharray="283"
-                  strokeDashoffset={283 - (283 * matchingProgress) / 100}
-                />
-              </svg>
-              <div className={styles.progressText}>{matchingProgress}%</div>
-            </div>
-            <h2>Running compliance matches...</h2>
-            <p>Analyzing floor plans, price constraints, and containment requirements in {locationPreference}.</p>
-          </div>
-        )}
+      {/* RENDER VIEW ACCORDING TO ROLE */}
 
-        {/* State 2: Empty/No Matches State */}
-        {!onboardingCompleted && !matchingInProgress && (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyCard}>
-              <div className={styles.emptyIcon}>
-                <svg viewBox="0 0 24 24" width="48" height="48">
+      {/* ROLE: STARTUP */}
+      {user.role === 'startup' && (
+        <main className={styles.mainContent}>
+          {matchingInProgress && (
+            <div className={styles.loaderContainer}>
+              <div className={styles.loaderSpinner}>
+                <svg className={styles.spinnerSvg} viewBox="0 0 100 100">
+                  <circle className={styles.spinnerTrack} cx="50" cy="50" r="45" />
+                  <circle 
+                    className={styles.spinnerFill} 
+                    cx="50" 
+                    cy="50" 
+                    r="45" 
+                    strokeDasharray="283"
+                    strokeDashoffset={283 - (283 * matchingProgress) / 100}
+                  />
+                </svg>
+                <div className={styles.progressText}>{matchingProgress}%</div>
+              </div>
+              <h2>Running compliance matches...</h2>
+              <p>Analyzing floor plans, price constraints, and containment requirements in {locationPreference}.</p>
+            </div>
+          )}
+
+          {!onboardingCompleted && !matchingInProgress && (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyCard}>
+                <div className={styles.emptyIcon}>
+                  <svg viewBox="0 0 24 24" width="48" height="48">
+                    <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                  </svg>
+                </div>
+                <h2 className={styles.emptyTitle}>Find Your Matches</h2>
+                <p className={styles.emptyDescription}>
+                  Provide your funding stage, containment preferences, and lab details to scan available properties and find compliant matches instantly.
+                </p>
+                <button 
+                  onClick={() => setShowOnboardingForm(true)} 
+                  className={styles.primaryPill}
+                >
+                  Find your matches
+                </button>
+              </div>
+            </div>
+          )}
+
+          {onboardingCompleted && !matchingInProgress && (
+            <div className={styles.dashboardGrid}>
+              <div className={styles.resultsHeader}>
+                <div>
+                  <h1 className={styles.title}>Your Lab Matches</h1>
+                  <p className={styles.subtitle}>
+                    Below are the compliance-checked, curated lab matches aligned with your science.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowOnboardingForm(true)} 
+                  className={styles.secondaryPill}
+                >
+                  Edit Requirements
+                </button>
+              </div>
+
+              <div className={styles.matchesGrid}>
+                {mockMatches
+                  .filter(m => m.location.toLowerCase() === locationPreference.toLowerCase())
+                  .map((match) => (
+                    <div key={match.id} className={`${styles.matchCard} glow`} onMouseMove={glowMove}>
+                      <div className={styles.matchVisualHeader}>
+                        <span className={styles.matchBadge}>{match.badge}</span>
+                        {match.imageType === 'mesh' && <div className={`${styles.pattern} ${styles.meshPattern}`} />}
+                        {match.imageType === 'waves' && <div className={`${styles.pattern} ${styles.wavesPattern}`} />}
+                        {match.imageType === 'steps' && <div className={`${styles.pattern} ${styles.stepsPattern}`} />}
+                        {match.imageType === 'leeds1' && <div className={`${styles.pattern} ${styles.leeds1Pattern}`} />}
+                        {match.imageType === 'leeds2' && <div className={`${styles.pattern} ${styles.leeds2Pattern}`} />}
+                        {match.imageType === 'leeds3' && <div className={`${styles.pattern} ${styles.leeds3Pattern}`} />}
+                      </div>
+
+                      <div className={styles.matchSpecs}>
+                        <div className={styles.specRow}>
+                          <div className={styles.specLabel}>Location</div>
+                          <div className={styles.specVal}>{match.location}</div>
+                        </div>
+                        <div className={styles.specRow}>
+                          <div className={styles.specLabel}>Price Per Month</div>
+                          <div className={styles.specVal}>{match.price}</div>
+                        </div>
+                        <div className={styles.specRow}>
+                          <div className={styles.specLabel}>Match Score</div>
+                          <div className={styles.specValScore}>{match.score}</div>
+                        </div>
+                        <div className={styles.specRowColumn}>
+                          <div className={styles.specLabel}>Match Insight <span className={styles.infoTooltip} title="Compliance calculation details">i</span></div>
+                          <div className={styles.specValInsight}>{match.insight}</div>
+                        </div>
+                        <div className={styles.specRow}>
+                          <div className={styles.specLabel}>Status</div>
+                          <div className={`${styles.statusBadge} ${match.status === 'Available' ? styles.statusAvail : styles.statusOffer}`}>
+                            {match.status}
+                          </div>
+                        </div>
+                        <div className={styles.specRow}>
+                          <div className={styles.specLabel}>Lab Type</div>
+                          <div className={styles.specValBadge}>{match.labType}</div>
+                        </div>
+                        <div className={styles.specRow}>
+                          <div className={styles.specLabel}>Landlord</div>
+                          <div className={styles.specValBadge}>{match.landlord}</div>
+                        </div>
+                        <div className={styles.specRowColumn}>
+                          <div className={styles.specLabel}>Email</div>
+                          <a href={`mailto:${match.email}`} className={styles.specEmail}>{match.email}</a>
+                        </div>
+                      </div>
+                      <a href={`mailto:${match.email}?subject=LabMatch%20Booking`} className={styles.bookBtn}>Book Call</a>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </main>
+      )}
+
+      {/* ROLE: LANDLORD */}
+      {user.role === 'landlord' && (
+        <main className={styles.mainContent}>
+          {/* Top Search bar, Filters and Add record pill */}
+          <div className={styles.landlordFilterBar}>
+            <div className={styles.searchAndFilters}>
+              <div className={styles.searchContainer}>
+                <svg viewBox="0 0 24 24" width="16" height="16" className={styles.searchIcon}>
                   <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                 </svg>
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search listings..." 
+                  className={styles.searchInput}
+                />
               </div>
-              <h2 className={styles.emptyTitle}>Find Your Matches</h2>
-              <p className={styles.emptyDescription}>
-                Provide your funding stage, containment preferences, and lab details to scan available properties and find compliant matches instantly.
-              </p>
-              <button 
-                onClick={() => setShowOnboardingForm(true)} 
-                className={styles.primaryPill}
-              >
-                Find your matches
-              </button>
+
+              <div className={styles.dropdownFilters}>
+                <select 
+                  value={landlordFilter} 
+                  onChange={(e) => setLandlordFilter(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="All">Landlord: All</option>
+                  <option value="Pioneer Group">Pioneer Group</option>
+                  <option value="Nexus Leeds">Nexus Leeds</option>
+                </select>
+
+                <select 
+                  value={typeFilter} 
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="All">Listing Type: All</option>
+                  <option value="Dry Lab">Dry Lab</option>
+                  <option value="Wet Lab">Wet Lab</option>
+                  <option value="Hybrid Lab">Hybrid Lab</option>
+                </select>
+
+                <select 
+                  value={statusFilter} 
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  <option value="All">Status: All</option>
+                  <option value="Available">Available</option>
+                  <option value="Under Offer">Under Offer</option>
+                  <option value="Let">Let</option>
+                </select>
+              </div>
             </div>
+
+            <button onClick={() => setShowAddChoice(true)} className={styles.primaryPill}>
+              Add record
+            </button>
           </div>
-        )}
 
-        {/* State 3: Active Matches Grid */}
-        {onboardingCompleted && !matchingInProgress && (
-          <div className={styles.dashboardGrid}>
-            <div className={styles.resultsHeader}>
-              <div>
-                <h1 className={styles.title}>Your Lab Matches</h1>
-                <p className={styles.subtitle}>
-                  Below are the compliance-checked, curated lab matches aligned with your science.
-                </p>
-              </div>
-              <button 
-                onClick={() => setShowOnboardingForm(true)} 
-                className={styles.secondaryPill}
-              >
-                Edit Requirements
-              </button>
-            </div>
-
-            {/* Curated Lab Matches Grid (High fidelity visual rendering from screenshots) */}
-            <div className={styles.matchesGrid}>
-              {mockMatches
-                .filter(m => m.location.toLowerCase() === locationPreference.toLowerCase())
-                .map((match) => (
-                  <div key={match.id} className={`${styles.matchCard} glow`} onMouseMove={glowMove}>
-                    {/* Visual Card Header */}
-                    <div className={styles.matchVisualHeader}>
-                      <span className={styles.matchBadge}>{match.badge}</span>
-                      {match.imageType === 'mesh' && (
-                        <div className={`${styles.pattern} ${styles.meshPattern}`} />
+          {/* Apple-Style Liquid Glass Table */}
+          <div className={styles.tableWrapper}>
+            <table className={styles.glassTable}>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Listing ID</th>
+                  <th>Listing Type</th>
+                  <th>Status</th>
+                  <th># Sqft</th>
+                  <th>Landlord</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredListings.map((listing) => (
+                  <tr key={listing.id}>
+                    {/* Inline Editable cell: Name */}
+                    <td 
+                      onClick={() => setEditingCell({ id: listing.id, col: 'name' })}
+                      className={styles.editableCell}
+                    >
+                      {editingCell?.id === listing.id && editingCell?.col === 'name' ? (
+                        <input 
+                          type="text" 
+                          defaultValue={listing.name}
+                          onBlur={(e) => {
+                            updateListingCell(listing.id, 'name', e.target.value);
+                            setEditingCell(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              updateListingCell(listing.id, 'name', e.target.value);
+                              setEditingCell(null);
+                            }
+                          }}
+                          autoFocus
+                          className={styles.inlineInput}
+                        />
+                      ) : (
+                        listing.name
                       )}
-                      {match.imageType === 'waves' && (
-                        <div className={`${styles.pattern} ${styles.wavesPattern}`} />
+                    </td>
+
+                    <td><span className={styles.listingIdCode}>{listing.id}</span></td>
+
+                    {/* Inline Editable cell: Listing Type */}
+                    <td 
+                      onClick={() => setEditingCell({ id: listing.id, col: 'type' })}
+                      className={styles.editableCell}
+                    >
+                      {editingCell?.id === listing.id && editingCell?.col === 'type' ? (
+                        <select 
+                          defaultValue={listing.type}
+                          onBlur={(e) => {
+                            updateListingCell(listing.id, 'type', e.target.value);
+                            setEditingCell(null);
+                          }}
+                          onChange={(e) => {
+                            updateListingCell(listing.id, 'type', e.target.value);
+                            setEditingCell(null);
+                          }}
+                          autoFocus
+                          className={styles.inlineSelect}
+                        >
+                          <option value="Dry Lab">Dry Lab</option>
+                          <option value="Wet Lab">Wet Lab</option>
+                          <option value="Hybrid Lab">Hybrid Lab</option>
+                        </select>
+                      ) : (
+                        <span className={styles.typeBadge}>{listing.type}</span>
                       )}
-                      {match.imageType === 'steps' && (
-                        <div className={`${styles.pattern} ${styles.stepsPattern}`} />
+                    </td>
+
+                    {/* Inline Editable cell: Status */}
+                    <td 
+                      onClick={() => setEditingCell({ id: listing.id, col: 'status' })}
+                      className={styles.editableCell}
+                    >
+                      {editingCell?.id === listing.id && editingCell?.col === 'status' ? (
+                        <select 
+                          defaultValue={listing.status}
+                          onBlur={(e) => {
+                            updateListingCell(listing.id, 'status', e.target.value);
+                            setEditingCell(null);
+                          }}
+                          onChange={(e) => {
+                            updateListingCell(listing.id, 'status', e.target.value);
+                            setEditingCell(null);
+                          }}
+                          autoFocus
+                          className={styles.inlineSelect}
+                        >
+                          <option value="Available">Available</option>
+                          <option value="Under Offer">Under Offer</option>
+                          <option value="Let">Let</option>
+                        </select>
+                      ) : (
+                        <span className={`${styles.statusLabel} ${
+                          listing.status === 'Available' ? styles.statusAvail : 
+                          listing.status === 'Under Offer' ? styles.statusOffer : 
+                          styles.statusLet
+                        }`}>
+                          {listing.status}
+                        </span>
                       )}
-                      {match.imageType === 'leeds1' && (
-                        <div className={`${styles.pattern} ${styles.leeds1Pattern}`} />
+                    </td>
+
+                    {/* Inline Editable cell: Sqft */}
+                    <td 
+                      onClick={() => setEditingCell({ id: listing.id, col: 'sqft' })}
+                      className={styles.editableCell}
+                    >
+                      {editingCell?.id === listing.id && editingCell?.col === 'sqft' ? (
+                        <input 
+                          type="number" 
+                          defaultValue={listing.sqft}
+                          onBlur={(e) => {
+                            updateListingCell(listing.id, 'sqft', e.target.value);
+                            setEditingCell(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              updateListingCell(listing.id, 'sqft', e.target.value);
+                              setEditingCell(null);
+                            }
+                          }}
+                          autoFocus
+                          className={styles.inlineInput}
+                        />
+                      ) : (
+                        listing.sqft.toLocaleString()
                       )}
-                      {match.imageType === 'leeds2' && (
-                        <div className={`${styles.pattern} ${styles.leeds2Pattern}`} />
-                      )}
-                      {match.imageType === 'leeds3' && (
-                        <div className={`${styles.pattern} ${styles.leeds3Pattern}`} />
-                      )}
-                    </div>
+                    </td>
 
-                    {/* Specifications List */}
-                    <div className={styles.matchSpecs}>
-                      <div className={styles.specRow}>
-                        <div className={styles.specLabel}>Location</div>
-                        <div className={styles.specVal}>{match.location}</div>
-                      </div>
-                      
-                      <div className={styles.specRow}>
-                        <div className={styles.specLabel}>Price Per Month</div>
-                        <div className={styles.specVal}>{match.price}</div>
-                      </div>
-
-                      <div className={styles.specRow}>
-                        <div className={styles.specLabel}>Match Score</div>
-                        <div className={styles.specValScore}>{match.score}</div>
-                      </div>
-
-                      <div className={styles.specRowColumn}>
-                        <div className={styles.specLabel}>
-                          Match Insight 
-                          <span className={styles.infoTooltip} title="Compliance calculation details">i</span>
-                        </div>
-                        <div className={styles.specValInsight}>{match.insight}</div>
-                      </div>
-
-                      <div className={styles.specRow}>
-                        <div className={styles.specLabel}>Status</div>
-                        <div className={`${styles.statusBadge} ${match.status === 'Available' ? styles.statusAvail : styles.statusOffer}`}>
-                          {match.status}
-                        </div>
-                      </div>
-
-                      <div className={styles.specRow}>
-                        <div className={styles.specLabel}>Lab Type</div>
-                        <div className={styles.specValBadge}>{match.labType}</div>
-                      </div>
-
-                      <div className={styles.specRow}>
-                        <div className={styles.specLabel}>Landlord</div>
-                        <div className={styles.specValBadge}>{match.landlord}</div>
-                      </div>
-
-                      <div className={styles.specRowColumn}>
-                        <div className={styles.specLabel}>Email</div>
-                        <a href={`mailto:${match.email}`} className={styles.specEmail}>
-                          <svg viewBox="0 0 24 24" width="14" height="14">
-                            <path fill="currentColor" d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/>
-                          </svg>
-                          {match.email}
-                        </a>
-                      </div>
-                    </div>
-
-                    <a href={`mailto:${match.email}?subject=LabMatch%20Booking%20Request`} className={styles.bookBtn}>
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                      </svg>
-                      Book Call
-                    </a>
-                  </div>
+                    <td><span className={styles.landlordBadge}>{listing.landlord}</span></td>
+                  </tr>
                 ))}
-            </div>
+              </tbody>
+            </table>
           </div>
-        )}
-      </main>
+        </main>
+      )}
 
-      {/* Interactive Onboarding Form Modal */}
+      {/* STARTUP ONBOARDING MODAL */}
       <AnimatePresence>
         {showOnboardingForm && (
           <div className={styles.modalOverlay}>
@@ -432,101 +718,217 @@ export default function Dashboard() {
             >
               <div className={styles.modalHeader}>
                 <h3 className={styles.modalTitle}>Lab Space Requirements</h3>
-                <button 
-                  onClick={() => setShowOnboardingForm(false)} 
-                  className={styles.closeBtn}
-                >
-                  &times;
-                </button>
+                <button onClick={() => setShowOnboardingForm(false)} className={styles.closeBtn}>&times;</button>
               </div>
 
               <form onSubmit={handleOnboardingSubmit} className={styles.form}>
                 <div className={styles.inputGroup}>
                   <label htmlFor="modalLocation" className={styles.label}>Location Preference</label>
-                  <select 
-                    id="modalLocation" 
-                    value={locationPreference} 
-                    onChange={(e) => setLocationPreference(e.target.value)}
-                    className={styles.select}
-                  >
+                  <select id="modalLocation" value={locationPreference} onChange={(e) => setLocationPreference(e.target.value)} className={styles.select}>
                     <option value="London">London (Pioneer Suite)</option>
                     <option value="Leeds">Leeds (Nexus Hub)</option>
                   </select>
                 </div>
-
                 <div className={styles.inputGroup}>
                   <label htmlFor="modalLabType" className={styles.label}>Lab Type Required</label>
-                  <select 
-                    id="modalLabType" 
-                    value={labType} 
-                    onChange={(e) => setLabType(e.target.value)}
-                    className={styles.select}
-                  >
+                  <select id="modalLabType" value={labType} onChange={(e) => setLabType(e.target.value)} className={styles.select}>
                     <option value="Dry Lab">Dry Lab (Tech/Computing/E-phys)</option>
                     <option value="Wet Lab">Wet Lab (Chemical/Biological)</option>
                   </select>
                 </div>
-
                 <div className={styles.inputGroup}>
                   <label htmlFor="modalFunding" className={styles.label}>Funding Stage</label>
-                  <select 
-                    id="modalFunding" 
-                    value={fundingStage} 
-                    onChange={(e) => setFundingStage(e.target.value)}
-                    className={styles.select}
-                  >
+                  <select id="modalFunding" value={fundingStage} onChange={(e) => setFundingStage(e.target.value)} className={styles.select}>
                     <option value="Seed">Pre-seed / Seed</option>
                     <option value="Series A">Series A</option>
                     <option value="Series B">Series B</option>
                     <option value="Spin-out">Academic Spin-out</option>
                   </select>
                 </div>
-
                 <div className={styles.inputGroup}>
                   <label htmlFor="modalSize" className={styles.label}>Target Size (sqft)</label>
+                  <input type="number" id="modalSize" value={targetSize} onChange={(e) => setTargetSize(e.target.value)} placeholder="e.g. 500" required className={styles.input} />
+                </div>
+                <div className={styles.checkboxGroup}>
+                  <div className={styles.checkboxLabel}>Containment & Equipment Needs</div>
+                  <label className={styles.checkboxItem}><input type="checkbox" checked={pcrRequired} onChange={(e) => setPcrRequired(e.target.checked)} />PCR Machine Required</label>
+                  <label className={styles.checkboxItem}><input type="checkbox" checked={massSpecRequired} onChange={(e) => setMassSpecRequired(e.target.checked)} />Mass Spectrometer Required</label>
+                  <label className={styles.checkboxItem}><input type="checkbox" checked={fumeHoodRequired} onChange={(e) => setFumeHoodRequired(e.target.checked)} />Fume Hood / Biosafety Cabinet</label>
+                </div>
+                <button type="submit" className={styles.modalSubmitBtn}>Match My Science</button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* LANDLORD: ADD RECORD CHOICE MODAL */}
+      <AnimatePresence>
+        {showAddChoice && (
+          <div className={styles.modalOverlay}>
+            <motion.div 
+              className={styles.modalCardChoice}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>Add New Listing</h3>
+                <button onClick={() => setShowAddChoice(false)} className={styles.closeBtn}>&times;</button>
+              </div>
+              
+              <div className={styles.choiceButtons}>
+                {/* Upload button with hover info tooltip */}
+                <div className={styles.uploadBtnWrapper}>
+                  <button onClick={handleFileUploadSimulate} className={styles.choiceBtn}>
+                    Upload Document
+                  </button>
+                  <div className={styles.infoIconWrapper}>
+                    <span className={styles.infoIcon}>i</span>
+                    <span className={styles.tooltipText}>
+                      Upload any file containing your available lab data, we will parse it and pre-populate your listing fields automatically.
+                    </span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setShowAddChoice(false);
+                    setShowManualForm(true);
+                  }} 
+                  className={styles.choiceBtn}
+                >
+                  Manually Add Listing
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* LANDLORD: UPLOAD PARSE PROGRESS LOADER */}
+      <AnimatePresence>
+        {showUploadLoader && (
+          <div className={styles.modalOverlay}>
+            <motion.div className={styles.modalCardUpload} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <div className={styles.loaderSpinner}>
+                <svg className={styles.spinnerSvg} viewBox="0 0 100 100">
+                  <circle className={styles.spinnerTrack} cx="50" cy="50" r="45" />
+                  <circle 
+                    className={styles.spinnerFill} 
+                    cx="50" 
+                    cy="50" 
+                    r="45" 
+                    strokeDasharray="283"
+                    strokeDashoffset={283 - (283 * uploadProgress) / 100}
+                  />
+                </svg>
+                <div className={styles.progressText}>{uploadProgress}%</div>
+              </div>
+              <h2>Parsing lab specifications...</h2>
+              <p>Analyzing floor layouts, equipment models, and space capacities.</p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* LANDLORD: MANUAL ADD FORM MODAL */}
+      <AnimatePresence>
+        {showManualForm && (
+          <div className={styles.modalOverlay}>
+            <motion.div className={styles.modalCard} initial={{ opacity: 0, y: 20 }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>Enter Listing Specifications</h3>
+                <button onClick={() => setShowManualForm(false)} className={styles.closeBtn}>&times;</button>
+              </div>
+
+              <form onSubmit={handleManualListingSubmit} className={styles.form}>
+                <div className={styles.inputGroup}>
+                  <label htmlFor="manualName" className={styles.label}>Lab Name / Title</label>
                   <input 
-                    type="number" 
-                    id="modalSize" 
-                    value={targetSize} 
-                    onChange={(e) => setTargetSize(e.target.value)} 
-                    placeholder="e.g. 500" 
+                    type="text" 
+                    id="manualName" 
+                    value={newLabName} 
+                    onChange={(e) => setNewLabName(e.target.value)} 
+                    placeholder="e.g. Wet Lab VH-001" 
                     required 
-                    className={styles.input}
+                    className={styles.input} 
                   />
                 </div>
 
-                <div className={styles.checkboxGroup}>
-                  <div className={styles.checkboxLabel}>Containment & Equipment Needs</div>
-                  <label className={styles.checkboxItem}>
-                    <input 
-                      type="checkbox" 
-                      checked={pcrRequired} 
-                      onChange={(e) => setPcrRequired(e.target.checked)} 
-                    />
-                    PCR Machine Required
-                  </label>
-                  <label className={styles.checkboxItem}>
-                    <input 
-                      type="checkbox" 
-                      checked={massSpecRequired} 
-                      onChange={(e) => setMassSpecRequired(e.target.checked)} 
-                    />
-                    Mass Spectrometer Required
-                  </label>
-                  <label className={styles.checkboxItem}>
-                    <input 
-                      type="checkbox" 
-                      checked={fumeHoodRequired} 
-                      onChange={(e) => setFumeHoodRequired(e.target.checked)} 
-                    />
-                    Fume Hood / Biosafety Cabinet
-                  </label>
+                <div className={styles.inputGroup}>
+                  <label htmlFor="manualType" className={styles.label}>Listing Type</label>
+                  <select 
+                    id="manualType" 
+                    value={newLabType} 
+                    onChange={(e) => setNewLabType(e.target.value)} 
+                    className={styles.select}
+                  >
+                    <option value="Dry Lab">Dry Lab</option>
+                    <option value="Wet Lab">Wet Lab</option>
+                    <option value="Hybrid Lab">Hybrid Lab</option>
+                  </select>
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <label htmlFor="manualStatus" className={styles.label}>Status</label>
+                  <select 
+                    id="manualStatus" 
+                    value={newLabStatus} 
+                    onChange={(e) => setNewLabStatus(e.target.value)} 
+                    className={styles.select}
+                  >
+                    <option value="Available">Available</option>
+                    <option value="Under Offer">Under Offer</option>
+                    <option value="Let">Let</option>
+                  </select>
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <label htmlFor="manualSqft" className={styles.label}>Available Size (sqft)</label>
+                  <input 
+                    type="number" 
+                    id="manualSqft" 
+                    value={newLabSqft} 
+                    onChange={(e) => setNewLabSqft(e.target.value)} 
+                    placeholder="e.g. 500" 
+                    required 
+                    className={styles.input} 
+                  />
                 </div>
 
                 <button type="submit" className={styles.modalSubmitBtn}>
-                  Match My Science
+                  Add Listing
                 </button>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* LANDLORD: POST-ADD MENU OVERLAY */}
+      <AnimatePresence>
+        {showPostAddMenu && (
+          <div className={styles.modalOverlay}>
+            <motion.div className={styles.modalCardChoice} initial={{ opacity: 0, scale: 0.95 }}>
+              <h3 className={styles.modalTitle} style={{ marginBottom: '16px', textAlign: 'center' }}>Listing Added Successfully!</h3>
+              <div className={styles.postAddActions}>
+                <button 
+                  onClick={() => {
+                    setShowPostAddMenu(false);
+                    setShowAddChoice(true);
+                  }}
+                  className={styles.choiceBtn}
+                >
+                  Add Another Listing
+                </button>
+                <button 
+                  onClick={() => setShowPostAddMenu(false)}
+                  className={styles.primaryPill}
+                >
+                  Close & View Table
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
