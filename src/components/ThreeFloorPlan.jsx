@@ -119,6 +119,68 @@ export default function ThreeFloorPlan() {
       floorPlanGroup.add(benchGroup);
     }
 
+    // Helper: Add stool/chair
+    function addChair(x, z) {
+      const chairGroup = new THREE.Group();
+
+      // seat cushion
+      const seatGeom = new THREE.CylinderGeometry(0.18, 0.18, 0.05, 8);
+      const seatMesh = new THREE.Mesh(seatGeom, benchMaterial);
+      seatMesh.position.set(0, 0.38, 0);
+      chairGroup.add(seatMesh);
+
+      const seatEdges = new THREE.EdgesGeometry(seatGeom);
+      const seatLine = new THREE.LineSegments(seatEdges, benchLineMaterial);
+      seatLine.position.copy(seatMesh.position);
+      chairGroup.add(seatLine);
+
+      // single support post
+      const postGeom = new THREE.CylinderGeometry(0.03, 0.03, 0.38, 4);
+      const postMesh = new THREE.Mesh(postGeom, benchMaterial);
+      postMesh.position.set(0, 0.19, 0);
+      chairGroup.add(postMesh);
+
+      const postEdges = new THREE.EdgesGeometry(postGeom);
+      const postLine = new THREE.LineSegments(postEdges, benchLineMaterial);
+      postLine.position.copy(postMesh.position);
+      chairGroup.add(postLine);
+
+      chairGroup.position.set(x, 0, z);
+      chairGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: 'bench',
+      };
+
+      floorPlanGroup.add(chairGroup);
+    }
+
+    // Helper: Add cabinet/fume hood/biosafety cabinet
+    function addEquipment(x, z, w, d, h = 0.85) {
+      const equipGroup = new THREE.Group();
+
+      const geometry = new THREE.BoxGeometry(w, h, d);
+      const mesh = new THREE.Mesh(geometry, benchMaterial);
+      mesh.position.set(0, h / 2, 0);
+      equipGroup.add(mesh);
+
+      const edges = new THREE.EdgesGeometry(geometry);
+      const line = new THREE.LineSegments(edges, lineMaterial);
+      line.position.copy(mesh.position);
+      equipGroup.add(line);
+
+      equipGroup.position.set(x, 0, z);
+      equipGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: 'bench',
+      };
+
+      floorPlanGroup.add(equipGroup);
+    }
+
     // --- Build Structure ---
     const outerW = 22;
     const outerH = 9.5;
@@ -173,15 +235,15 @@ export default function ThreeFloorPlan() {
     ovalGroup.userData = { baseX: 0, baseY: 0, baseZ: 0, type: 'atrium_line' };
     floorPlanGroup.add(ovalGroup);
 
-    // 4. Room dividers (Inner walls)
+    // 4. Room dividers (Inner walls) - ADJUSTED to avoid penetrating outer walls
     addWall(-7.5, 0, thickness, 5.5, 1.2, 'inner_wall');
-    addWall(-10.5, -0.5, 3.8, thickness, 1.2, 'inner_wall');
-    addWall(-4.5, -0.5, 5.8, thickness, 1.2, 'inner_wall');
+    addWall(-9.25, -0.5, 3.3, thickness, 1.2, 'inner_wall'); // Adjusted w/center
+    addWall(-4.875, -0.5, 5.0, thickness, 1.2, 'inner_wall'); // Adjusted w/center
     addWall(-7.5, -3.2, 5.8, thickness, 1.2, 'inner_wall');
     addWall(-7.5, 2.8, 5.8, thickness, 1.2, 'inner_wall');
     
     addWall(7.5, 0, thickness, 5.5, 1.2, 'inner_wall');
-    addWall(10.5, -0.5, 3.8, thickness, 1.2, 'inner_wall');
+    addWall(9.25, -0.5, 3.3, thickness, 1.2, 'inner_wall');  // Adjusted w/center
     addWall(7.5, -3.2, 5.8, thickness, 1.2, 'inner_wall');
     addWall(7.5, 2.8, 5.8, thickness, 1.2, 'inner_wall');
     
@@ -190,14 +252,28 @@ export default function ThreeFloorPlan() {
     addWall(2.2, 1.8, 1.2, thickness, 1.2, 'inner_wall');
     addWall(2.2, -1.8, 1.2, thickness, 1.2, 'inner_wall');
 
-    // 5. Furniture (Benches)
+    // 5. Furniture (Benches, Chairs, and Equipment)
+    // Left Labs Benches
     for (let z = -2.2; z <= 2.2; z += 1.1) {
       addBench(-9.2, z, 1.4, 0.4);
       addBench(-5.8, z, 1.4, 0.4);
+      
+      // Chairs next to the benches
+      addChair(-8.3, z);
+      addChair(-6.7, z);
     }
+    
+    // Right Labs Benches
     for (let z = -2.2; z <= 2.2; z += 1.1) {
       addBench(9.2, z, 1.4, 0.4);
+      addChair(8.3, z);
     }
+
+    // Heavy lab equipment (biosafety cabinets, diagnostic units, columns)
+    addEquipment(-10.5, -3.5, 0.8, 0.8, 1.0); // Fume hood back-left
+    addEquipment(-4.5, -3.5, 1.0, 0.8, 0.95);
+    addEquipment(10.5, 3.5, 0.8, 0.8, 1.0);   // Diagnostic unit right
+    addEquipment(4.5, 3.5, 1.0, 0.8, 0.95);
 
     // Offset parent group slightly
     floorPlanGroup.position.set(0, -0.5, 0);

@@ -1,13 +1,13 @@
 import { motion } from 'framer-motion';
 import { glowMove } from '../utils/glow';
-import flaskSketch from '../assets/flask-sketch.jpg';
-import buildingSketch from '../assets/building-sketch.jpg';
+import SketchedFlask from './SketchedFlask';
+import SketchedBuilding from './SketchedBuilding';
 import styles from './HowItWorks.module.css';
 
 /**
  * HowItWorks: Two sections showing the step-by-step process
  * for startups (sand background) and landlords (white background).
- * Includes two-column layouts featuring custom architectural sketches.
+ * Includes two-column layouts featuring animating vector sketches.
  */
 
 const startupSteps = [
@@ -113,14 +113,10 @@ export default function HowItWorks() {
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
-              viewport={{ once: true, margin: '-50px' }}
+              viewport={{ once: false, margin: '-50px' }}
             >
               <div className={`${styles.sketchCard} glow`} onMouseMove={glowMove}>
-                <img 
-                  src={flaskSketch} 
-                  alt="Sketch of a biology beaker, pipette and DNA helix" 
-                  className={styles.sketchImage} 
-                />
+                <SketchedFlask />
               </div>
             </motion.div>
           </div>
@@ -137,14 +133,10 @@ export default function HowItWorks() {
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: 'easeOut' }}
-              viewport={{ once: true, margin: '-50px' }}
+              viewport={{ once: false, margin: '-50px' }}
             >
               <div className={`${styles.sketchCard} glow`} onMouseMove={glowMove}>
-                <img 
-                  src={buildingSketch} 
-                  alt="Sketch of a modern bio-research laboratory building" 
-                  className={styles.sketchImage} 
-                />
+                <SketchedBuilding />
               </div>
             </motion.div>
 
