@@ -12,21 +12,12 @@
   padding-top: var(--nav-height);
 }
 
-/* Floor plan sketch: positioned behind everything */
+/* Floor plan 3D canvas: positioned behind everything */
 .sketchWrapper {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   pointer-events: none;
   z-index: 1;
-}
-
-.sketch {
-  max-width: 65%;
-  max-height: 55%;
-  object-fit: contain;
 }
 
 /* Centred text content, above the sketch */
@@ -50,9 +41,4 @@
   letter-spacing: 0.01em;
 }
 
-@media (max-width: 768px) {
-  .sketch {
-    max-width: 90%;
-    max-height: 45%;
-  }
-}
+

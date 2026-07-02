@@ -1,12 +1,12 @@
 import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import floorplanSketch from '../assets/floorplan-sketch.jpg';
+import ThreeFloorPlan from './ThreeFloorPlan';
 import styles from './Hero.module.css';
 
 /**
  * Hero: Full-viewport hero section.
- * Centred "LabMatch." heading with a pencil-sketch floor plan
- * that fades and scales on scroll.
+ * Centres the "LabMatch." heading over a slowly rotating 3D model
+ * of the lab floor plan that scales and fades on scroll.
  */
 export default function Hero() {
   const heroRef = useRef(null);
@@ -17,26 +17,21 @@ export default function Hero() {
     offset: ['start start', 'end start'],
   });
 
-  // Floor plan: fade out and scale up as user scrolls
-  const sketchOpacity = useTransform(scrollYProgress, [0, 0.5], [0.13, 0]);
-  const sketchScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.08]);
+  // 3D canvas wrapper: fade out and scale up as user scrolls
+  const sketchOpacity = useTransform(scrollYProgress, [0, 0.5], [0.35, 0]); // increased opacity slightly for 3D visibility
+  const sketchScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.1]);
 
   // Heading: subtle parallax (moves slower than scroll)
   const headingY = useTransform(scrollYProgress, [0, 1], [0, 80]);
 
   return (
     <section ref={heroRef} className={styles.hero}>
-      {/* Floor plan sketch background */}
+      {/* 3D floor plan canvas background */}
       <motion.div
         className={styles.sketchWrapper}
         style={{ opacity: sketchOpacity, scale: sketchScale }}
       >
-        <img
-          src={floorplanSketch}
-          alt=""
-          className={styles.sketch}
-          aria-hidden="true"
-        />
+        <ThreeFloorPlan />
       </motion.div>
 
       {/* Centred heading content */}
