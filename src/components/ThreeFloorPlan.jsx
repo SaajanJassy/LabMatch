@@ -404,6 +404,87 @@ export default function ThreeFloorPlan() {
       floorPlanGroup.add(distGroup);
     }
 
+    // Helper: Add detailed microscope
+    function addMicroscope(x, z) {
+      const scopeGroup = new THREE.Group();
+      const benchH = 0.5;
+
+      // 1. Base plate
+      const baseGeom = new THREE.BoxGeometry(0.18, 0.04, 0.2);
+      const baseMesh = new THREE.Mesh(baseGeom, benchMaterial);
+      baseMesh.position.set(0, benchH + 0.02, 0);
+      scopeGroup.add(baseMesh);
+      const baseLine = new THREE.LineSegments(new THREE.EdgesGeometry(baseGeom), benchLineMaterial);
+      baseLine.position.copy(baseMesh.position);
+      scopeGroup.add(baseLine);
+
+      // 2. Curved arm
+      const armPoints = [
+        new THREE.Vector3(0, benchH + 0.04, -0.06),
+        new THREE.Vector3(0, benchH + 0.28, -0.06),
+        new THREE.Vector3(0, benchH + 0.28, 0),
+        new THREE.Vector3(0, benchH + 0.22, 0.04)
+      ];
+      const armGeom = new THREE.BufferGeometry().setFromPoints(armPoints);
+      const armLine = new THREE.Line(armGeom, lineMaterial);
+      scopeGroup.add(armLine);
+
+      // 3. Eyepiece tubes
+      const eyeGeom = new THREE.CylinderGeometry(0.02, 0.02, 0.1, 6);
+      const eyeMesh = new THREE.Mesh(eyeGeom, benchMaterial);
+      eyeMesh.position.set(0, benchH + 0.28, 0.04);
+      eyeMesh.rotation.x = Math.PI / 4;
+      scopeGroup.add(eyeMesh);
+      const eyeLine = new THREE.LineSegments(new THREE.EdgesGeometry(eyeGeom), lineMaterial);
+      eyeLine.position.copy(eyeMesh.position);
+      eyeLine.rotation.copy(eyeMesh.rotation);
+      scopeGroup.add(eyeLine);
+
+      scopeGroup.position.set(x, 0, z);
+      scopeGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: 'bench',
+      };
+      floorPlanGroup.add(scopeGroup);
+    }
+
+    // Helper: Add tabletop centrifuge
+    function addCentrifuge(x, z) {
+      const centGroup = new THREE.Group();
+      const benchH = 0.5;
+
+      // Outer drum
+      const drumGeom = new THREE.CylinderGeometry(0.2, 0.2, 0.25, 8);
+      const drumMesh = new THREE.Mesh(drumGeom, benchMaterial);
+      drumMesh.position.set(0, benchH + 0.125, 0);
+      centGroup.add(drumMesh);
+      const drumLine = new THREE.LineSegments(new THREE.EdgesGeometry(drumGeom), lineMaterial);
+      drumLine.position.copy(drumMesh.position);
+      centGroup.add(drumLine);
+
+      // Control panel screen
+      const panelGeom = new THREE.BoxGeometry(0.12, 0.03, 0.1);
+      const panelMesh = new THREE.Mesh(panelGeom, benchMaterial);
+      panelMesh.position.set(0, benchH + 0.22, 0.1);
+      panelMesh.rotation.x = Math.PI / 6;
+      centGroup.add(panelMesh);
+      const panelLine = new THREE.LineSegments(new THREE.EdgesGeometry(panelGeom), benchLineMaterial);
+      panelLine.position.copy(panelMesh.position);
+      panelLine.rotation.copy(panelMesh.rotation);
+      centGroup.add(panelLine);
+
+      centGroup.position.set(x, 0, z);
+      centGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: 'bench',
+      };
+      floorPlanGroup.add(centGroup);
+    }
+
     // --- Build Structure ---
     const outerW = 22;
     const outerH = 9.5;
@@ -475,7 +556,7 @@ export default function ThreeFloorPlan() {
     addWall(2.2, 1.8, 1.2, thickness, 1.2, 'inner_wall');
     addWall(2.2, -1.8, 1.2, thickness, 1.2, 'inner_wall');
 
-    // 5. Furniture (Benches, Chairs, Equipment, Sinks, Computers, Beakers, and Distillation setups)
+    // 5. Furniture (Benches, Chairs, Equipment, Sinks, Computers, Beakers, Distillation, Microscopes, Centrifuges, and Ceiling Pipes)
     // Left Lab Zone
     for (let z = -2.2; z <= 2.2; z += 1.1) {
       addBench(-9.2, z, 1.4, 0.4);
@@ -485,16 +566,16 @@ export default function ThreeFloorPlan() {
       addChair(-8.3, z);
       addChair(-6.7, z);
 
-      // Add a computer monitor on some benches
+      // Add computers, microscopes, centrifuges, and glassware dynamically
       if (z === 0) {
         addComputer(-9.2, z + 0.15, Math.PI / 2);
+        addMicroscope(-5.8, z);
       } else if (z > 0) {
-        // Add chemical beaker flasks on benches and overhead shelves
         addScientificBeaker(-9.2, z - 0.2, 0.12);
-        addScientificBeaker(-5.8, z + 0.2, 0.10);
+        addCentrifuge(-5.8, z);
       } else {
-        // Add a distillation setup on the middle benches
         addDistillationSetup(-5.8, z);
+        addMicroscope(-9.2, z);
       }
     }
     // Sinks at the ends of left benches
@@ -506,11 +587,12 @@ export default function ThreeFloorPlan() {
       addBench(9.2, z, 1.4, 0.4);
       addChair(8.3, z);
       
-      if (z <= 0) {
-        // Computers facing the desk chairs
+      if (z < 0) {
         addComputer(9.2, z - 0.1, -Math.PI / 2);
+        addMicroscope(9.2, z + 0.2);
+      } else if (z === 0) {
+        addCentrifuge(9.2, z);
       } else {
-        // Distillation and beaker setup for biology/chemistry landlord preview
         addDistillationSetup(9.2, z);
         addScientificBeaker(9.2, z + 0.4, 0.12);
       }
@@ -518,17 +600,33 @@ export default function ThreeFloorPlan() {
     // Sink at the end of right bench
     addSink(9.2, -3.2, 0.4, 0.4);
 
-    // Heavy lab equipment (biosafety cabinets, diagnostic units, columns)
+    // Heavy lab equipment (fume hoods, cleanroom storage cabinets)
     addEquipment(-10.5, -3.8, 0.7, 0.7, 1.1); // Back-left fume hood
     addEquipment(-4.5, -3.8, 0.9, 0.7, 1.0);  // Cleanroom equipment box
     addEquipment(10.5, 3.8, 0.7, 0.7, 1.1);   // Right diagnostic unit
     addEquipment(4.5, 3.8, 0.9, 0.7, 1.0);    // Fume hood right
 
-    // Scale down the model (0.72x) to completely prevent border/viewport edge clipping
-    floorPlanGroup.scale.set(0.72, 0.72, 0.72);
+    // Overhead Industrial Utility / Gas Pipes (Forest green wireframes high up)
+    const pipeGeom1 = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-10.5, 1.6, -2.2),
+      new THREE.Vector3(10.5, 1.6, -2.2)
+    ]);
+    const pipeGeom2 = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-10.5, 1.6, 2.2),
+      new THREE.Vector3(10.5, 1.6, 2.2)
+    ]);
     
-    // Offset parent group slightly
-    floorPlanGroup.position.set(0, -0.2, 0);
+    const pipeGroup = new THREE.Group();
+    pipeGroup.add(new THREE.Line(pipeGeom1, lineMaterial));
+    pipeGroup.add(new THREE.Line(pipeGeom2, lineMaterial));
+    pipeGroup.userData = { baseX: 0, baseY: 0, baseZ: 0, type: 'atrium_line' };
+    floorPlanGroup.add(pipeGroup);
+
+    // Make the lab model 20% bigger (0.85x scale)
+    floorPlanGroup.scale.set(0.85, 0.85, 0.85);
+    
+    // Offset parent group slightly (lower on Y axis to prevent camera top clipping)
+    floorPlanGroup.position.set(0, -0.4, 0);
 
     // --- Animation Loop ---
     let animationFrameId;
