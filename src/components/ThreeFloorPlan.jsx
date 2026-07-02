@@ -300,6 +300,110 @@ export default function ThreeFloorPlan() {
       floorPlanGroup.add(equipGroup);
     }
 
+    // Helper: Add small conical beaker flask
+    function addScientificBeaker(x, z, size = 0.15) {
+      const flaskGroup = new THREE.Group();
+      const h = size * 1.5;
+
+      // Cone shape (base diameter size, top diameter size/3, height h)
+      const coneGeom = new THREE.CylinderGeometry(size/3, size, h, 8);
+      const mesh = new THREE.Mesh(coneGeom, benchMaterial);
+      mesh.position.set(0, h/2 + 0.5, 0); // rest on top of bench (bench is h=0.5)
+      flaskGroup.add(mesh);
+
+      const edges = new THREE.EdgesGeometry(coneGeom);
+      const line = new THREE.LineSegments(edges, lineMaterial);
+      line.position.copy(mesh.position);
+      flaskGroup.add(line);
+
+      // Neck tube
+      const neckGeom = new THREE.CylinderGeometry(size/3, size/3, size/2, 8);
+      const neckMesh = new THREE.Mesh(neckGeom, benchMaterial);
+      neckMesh.position.set(0, h + size/4 + 0.5, 0);
+      flaskGroup.add(neckMesh);
+
+      const neckEdges = new THREE.EdgesGeometry(neckGeom);
+      const neckLine = new THREE.LineSegments(neckEdges, lineMaterial);
+      neckLine.position.copy(neckMesh.position);
+      flaskGroup.add(neckLine);
+
+      flaskGroup.position.set(x, 0, z);
+      flaskGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: 'bench',
+      };
+      floorPlanGroup.add(flaskGroup);
+    }
+
+    // Helper: Add detailed distillation setup with glass tubes and boiling flasks
+    function addDistillationSetup(x, z) {
+      const distGroup = new THREE.Group();
+      const benchH = 0.5;
+
+      // 1. Heating Mantle box base
+      const baseW = 0.35, baseH = 0.2, baseD = 0.35;
+      const baseGeom = new THREE.BoxGeometry(baseW, baseH, baseD);
+      const baseMesh = new THREE.Mesh(baseGeom, benchMaterial);
+      baseMesh.position.set(-0.25, benchH + baseH/2, 0);
+      distGroup.add(baseMesh);
+      const baseLine = new THREE.LineSegments(new THREE.EdgesGeometry(baseGeom), benchLineMaterial);
+      baseLine.position.copy(baseMesh.position);
+      distGroup.add(baseLine);
+
+      // 2. Boiling Flask (round cylinder on heating mantle)
+      const flaskGeom = new THREE.CylinderGeometry(0.12, 0.12, 0.2, 8);
+      const flaskMesh = new THREE.Mesh(flaskGeom, benchMaterial);
+      flaskMesh.position.set(-0.25, benchH + baseH + 0.1, 0);
+      distGroup.add(flaskMesh);
+      const flaskLine = new THREE.LineSegments(new THREE.EdgesGeometry(flaskGeom), lineMaterial);
+      flaskLine.position.copy(flaskMesh.position);
+      distGroup.add(flaskLine);
+
+      // 3. Condenser tube (angled line segments)
+      const condenserPoints = [
+        new THREE.Vector3(-0.25, benchH + baseH + 0.2, 0),     // start from neck of boiling flask
+        new THREE.Vector3(-0.25, benchH + baseH + 0.4, 0),     // vertical neck
+        new THREE.Vector3(0.25, benchH + baseH + 0.1, 0),      // angled tube going down to right
+        new THREE.Vector3(0.25, benchH + 0.2, 0)               // vertical drop into receiving beaker
+      ];
+      const condenserGeom = new THREE.BufferGeometry().setFromPoints(condenserPoints);
+      const condenserLine = new THREE.Line(condenserGeom, lineMaterial);
+      distGroup.add(condenserLine);
+
+      // Outer jacket around condenser (cooling cylinder)
+      const jacketGeom = new THREE.CylinderGeometry(0.06, 0.06, 0.4, 6);
+      const jacketMesh = new THREE.Mesh(jacketGeom, benchMaterial);
+      jacketMesh.position.set(0, benchH + baseH + 0.22, 0);
+      jacketMesh.rotation.z = -Math.PI / 6; // align along angled condenser line
+      distGroup.add(jacketMesh);
+      const jacketLine = new THREE.LineSegments(new THREE.EdgesGeometry(jacketGeom), lineMaterial);
+      jacketLine.position.copy(jacketMesh.position);
+      jacketLine.rotation.copy(jacketMesh.rotation);
+      distGroup.add(jacketLine);
+
+      // 4. Receiving Beaker
+      const rx = 0.25;
+      const beakerH = 0.2, beakerW = 0.2;
+      const beakerGeom = new THREE.CylinderGeometry(beakerW/2, beakerW/2, beakerH, 8);
+      const beakerMesh = new THREE.Mesh(beakerGeom, benchMaterial);
+      beakerMesh.position.set(rx, benchH + beakerH/2, 0);
+      distGroup.add(beakerMesh);
+      const beakerLine = new THREE.LineSegments(new THREE.EdgesGeometry(beakerGeom), lineMaterial);
+      beakerLine.position.copy(beakerMesh.position);
+      distGroup.add(beakerLine);
+
+      distGroup.position.set(x, 0, z);
+      distGroup.userData = {
+        baseX: x,
+        baseY: 0,
+        baseZ: z,
+        type: 'bench',
+      };
+      floorPlanGroup.add(distGroup);
+    }
+
     // --- Build Structure ---
     const outerW = 22;
     const outerH = 9.5;
@@ -371,7 +475,7 @@ export default function ThreeFloorPlan() {
     addWall(2.2, 1.8, 1.2, thickness, 1.2, 'inner_wall');
     addWall(2.2, -1.8, 1.2, thickness, 1.2, 'inner_wall');
 
-    // 5. Furniture (Benches, Chairs, Equipment, Sinks, and Computers)
+    // 5. Furniture (Benches, Chairs, Equipment, Sinks, Computers, Beakers, and Distillation setups)
     // Left Lab Zone
     for (let z = -2.2; z <= 2.2; z += 1.1) {
       addBench(-9.2, z, 1.4, 0.4);
@@ -381,9 +485,16 @@ export default function ThreeFloorPlan() {
       addChair(-8.3, z);
       addChair(-6.7, z);
 
-      // Add a computer monitor on every second bench
-      if (Math.abs(z) < 1.5) {
-        addComputer(-9.2, z + 0.1, Math.PI / 2);
+      // Add a computer monitor on some benches
+      if (z === 0) {
+        addComputer(-9.2, z + 0.15, Math.PI / 2);
+      } else if (z > 0) {
+        // Add chemical beaker flasks on benches and overhead shelves
+        addScientificBeaker(-9.2, z - 0.2, 0.12);
+        addScientificBeaker(-5.8, z + 0.2, 0.10);
+      } else {
+        // Add a distillation setup on the middle benches
+        addDistillationSetup(-5.8, z);
       }
     }
     // Sinks at the ends of left benches
@@ -395,8 +506,14 @@ export default function ThreeFloorPlan() {
       addBench(9.2, z, 1.4, 0.4);
       addChair(8.3, z);
       
-      // Computers facing the desk chairs
-      addComputer(9.2, z - 0.1, -Math.PI / 2);
+      if (z <= 0) {
+        // Computers facing the desk chairs
+        addComputer(9.2, z - 0.1, -Math.PI / 2);
+      } else {
+        // Distillation and beaker setup for biology/chemistry landlord preview
+        addDistillationSetup(9.2, z);
+        addScientificBeaker(9.2, z + 0.4, 0.12);
+      }
     }
     // Sink at the end of right bench
     addSink(9.2, -3.2, 0.4, 0.4);
@@ -407,8 +524,11 @@ export default function ThreeFloorPlan() {
     addEquipment(10.5, 3.8, 0.7, 0.7, 1.1);   // Right diagnostic unit
     addEquipment(4.5, 3.8, 0.9, 0.7, 1.0);    // Fume hood right
 
+    // Scale down the model (0.72x) to completely prevent border/viewport edge clipping
+    floorPlanGroup.scale.set(0.72, 0.72, 0.72);
+    
     // Offset parent group slightly
-    floorPlanGroup.position.set(0, -0.5, 0);
+    floorPlanGroup.position.set(0, -0.2, 0);
 
     // --- Animation Loop ---
     let animationFrameId;
