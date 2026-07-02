@@ -95,6 +95,7 @@ export default function Dashboard() {
   const [showOnboardingForm, setShowOnboardingForm] = useState(false);
   const [matchingInProgress, setMatchingInProgress] = useState(false);
   const [matchingProgress, setMatchingProgress] = useState(0);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Onboarding Form values
   const [fundingStage, setFundingStage] = useState('Seed');
@@ -178,16 +179,24 @@ export default function Dashboard() {
 
   // Render the appropriate top-right avatar / org details in the sleek nav bar
   const renderUserPill = () => (
-    <div className={styles.accountCard}>
+    <button 
+      onClick={() => setDropdownOpen(!dropdownOpen)} 
+      className={styles.accountCard}
+      aria-expanded={dropdownOpen}
+    >
       <div className={styles.avatar}>
         {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
       </div>
-      <div className={styles.accountDetails}>
-        <div className={styles.accountName}>{user.name}</div>
-        <div className={styles.accountOrg}>{user.organisation}</div>
-      </div>
-      <span className={styles.roleBadge}>{user.role}</span>
-    </div>
+      <span className={styles.accountName}>{user.name}</span>
+      <svg 
+        viewBox="0 0 24 24" 
+        width="14" 
+        height="14" 
+        className={`${styles.chevron} ${dropdownOpen ? styles.chevronOpen : ''}`}
+      >
+        <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+      </svg>
+    </button>
   );
 
   return (
@@ -196,10 +205,58 @@ export default function Dashboard() {
       <nav className={styles.sleekNavbar}>
         <div className={styles.logo}>LabMatch.</div>
         <div className={styles.navActions}>
-          {renderUserPill()}
-          <button onClick={handleLogout} className={styles.logoutPill}>
-            Sign Out
-          </button>
+          <div className={styles.userMenuWrapper}>
+            {renderUserPill()}
+            
+            <AnimatePresence>
+              {dropdownOpen && (
+                <motion.div 
+                  className={styles.dropdownCard}
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                >
+                  <div className={styles.dropdownHeader}>
+                    <h4>Profile Details</h4>
+                    <span className={styles.dropdownRole}>{user.role}</span>
+                  </div>
+                  <div className={styles.dropdownBody}>
+                    <div className={styles.dropdownRow}>
+                      <span className={styles.dropdownLabel}>Company</span>
+                      <span className={styles.dropdownValue}>{user.organisation}</span>
+                    </div>
+                    <div className={styles.dropdownRow}>
+                      <span className={styles.dropdownLabel}>Email</span>
+                      <span className={styles.dropdownValue}>{user.email}</span>
+                    </div>
+                    {user.onboarding && (
+                      <>
+                        <div className={styles.dropdownDivider} />
+                        <div className={styles.dropdownRow}>
+                          <span className={styles.dropdownLabel}>Target Location</span>
+                          <span className={styles.dropdownValue}>{user.onboarding.locationPreference}</span>
+                        </div>
+                        <div className={styles.dropdownRow}>
+                          <span className={styles.dropdownLabel}>Required Size</span>
+                          <span className={styles.dropdownValue}>{user.onboarding.targetSize} sqft</span>
+                        </div>
+                        <div className={styles.dropdownRow}>
+                          <span className={styles.dropdownLabel}>Lab Type</span>
+                          <span className={styles.dropdownValue}>{user.onboarding.labType}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className={styles.dropdownFooter}>
+                    <button onClick={handleLogout} className={styles.logoutBtn}>
+                      Sign Out
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </nav>
 
