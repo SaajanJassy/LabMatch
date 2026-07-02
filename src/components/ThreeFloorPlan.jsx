@@ -27,10 +27,10 @@ export default function ThreeFloorPlan() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    
-    // Set display: block to avoid layout offsets
     renderer.domElement.style.display = 'block';
-    
+
+    // Clear container to prevent duplicate canvas elements in React Strict Mode
+    containerRef.current.innerHTML = '';
     containerRef.current.appendChild(renderer.domElement);
 
     // --- Lights ---
@@ -207,56 +207,52 @@ export default function ThreeFloorPlan() {
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      // 1. Slow, continuous Y-axis rotation
-      floorPlanGroup.rotation.y += 0.002;
+      try {
+        // 1. Slow, continuous Y-axis rotation
+        floorPlanGroup.rotation.y += 0.002;
 
-      // 2. Clean scroll-driven explosion animation with an idle threshold
-      const rawScroll = window.scrollY / window.innerHeight;
-      const startThreshold = 0.15; // 15% threshold before starting explosion
-      
-      let scrollFraction = 0;
-      if (rawScroll > startThreshold) {
-        // Map scroll from 15% to 80% viewport height for a clean transition
-        scrollFraction = Math.min(1, (rawScroll - startThreshold) / (0.8 - startThreshold));
-      }
-
-      floorPlanGroup.children.forEach((child) => {
-        if (!child.userData || !child.userData.type) return;
-
-        const { baseX, baseY, baseZ, type } = child.userData;
-
-        if (type === 'outer_back') {
-          // Push backward on Z, raise on Y
-          child.position.z = baseZ - 4.5 * scrollFraction;
-          child.position.y = baseY + 1.2 * scrollFraction;
-        } else if (type === 'outer_front') {
-          // Push forward on Z, raise on Y
-          child.position.z = baseZ + 4.5 * scrollFraction;
-          child.position.y = baseY + 1.2 * scrollFraction;
-        } else if (type === 'outer_left') {
-          // Push left on X, raise on Y
-          child.position.x = baseX - 5.5 * scrollFraction;
-          child.position.y = baseY + 1.2 * scrollFraction;
-        } else if (type === 'outer_right') {
-          // Push right on X, raise on Y
-          child.position.x = baseX + 5.5 * scrollFraction;
-          child.position.y = baseY + 1.2 * scrollFraction;
-        } else if (type === 'inner_wall') {
-          // Lift room dividers straight up cleanly
-          child.position.y = baseY + 5.5 * scrollFraction;
-        } else if (type === 'atrium_wall') {
-          // Lift atrium walls up at a distinct rate
-          child.position.y = baseY + 4.0 * scrollFraction;
-        } else if (type === 'atrium_line') {
-          // Sink lines downwards to ground plane
-          child.position.y = baseY - 2.5 * scrollFraction;
-        } else if (type === 'bench') {
-          // Slide furniture slightly outward on X axis, raise slightly
-          const driftDirX = baseX > 0 ? 1 : -1;
-          child.position.x = baseX + 2.0 * driftDirX * scrollFraction;
-          child.position.y = baseY + 0.3 * scrollFraction;
+        // 2. Clean scroll-driven explosion animation with an idle threshold
+        const rawScroll = window.scrollY / window.innerHeight;
+        const startThreshold = 0.15; // 15% threshold before starting explosion
+        
+        let scrollFraction = 0;
+        if (rawScroll > startThreshold) {
+          // Map scroll from 15% to 80% viewport height for a clean transition
+          scrollFraction = Math.min(1, (rawScroll - startThreshold) / (0.8 - startThreshold));
         }
-      });
+
+        floorPlanGroup.children.forEach((child) => {
+          if (!child.userData || !child.userData.type) return;
+
+          const { baseX, baseY, baseZ, type } = child.userData;
+
+          if (type === 'outer_back') {
+            child.position.z = baseZ - 4.5 * scrollFraction;
+            child.position.y = baseY + 1.2 * scrollFraction;
+          } else if (type === 'outer_front') {
+            child.position.z = baseZ + 4.5 * scrollFraction;
+            child.position.y = baseY + 1.2 * scrollFraction;
+          } else if (type === 'outer_left') {
+            child.position.x = baseX - 5.5 * scrollFraction;
+            child.position.y = baseY + 1.2 * scrollFraction;
+          } else if (type === 'outer_right') {
+            child.position.x = baseX + 5.5 * scrollFraction;
+            child.position.y = baseY + 1.2 * scrollFraction;
+          } else if (type === 'inner_wall') {
+            child.position.y = baseY + 5.5 * scrollFraction;
+          } else if (type === 'atrium_wall') {
+            child.position.y = baseY + 4.0 * scrollFraction;
+          } else if (type === 'atrium_line') {
+            child.position.y = baseY - 2.5 * scrollFraction;
+          } else if (type === 'bench') {
+            const driftDirX = baseX > 0 ? 1 : -1;
+            child.position.x = baseX + 2.0 * driftDirX * scrollFraction;
+            child.position.y = baseY + 0.3 * scrollFraction;
+          }
+        });
+      } catch (err) {
+        console.error("ThreeJS animate error:", err);
+      }
 
       renderer.render(scene, camera);
     };
