@@ -16,6 +16,7 @@
   /* Typography */
   --font-heading: 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-nav: 'Lora', Georgia, serif;
 
   /* Spacing scale */
   --space-xs: 0.5rem;

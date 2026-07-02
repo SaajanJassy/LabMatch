@@ -48,7 +48,7 @@
 }
 
 .link {
-  font-family: var(--font-body);
+  font-family: var(--font-nav);
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--ink);
@@ -61,13 +61,13 @@
 }
 
 .loginBtn {
-  font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-family: var(--font-nav);
+  font-size: 0.925rem;
   font-weight: 600;
   color: var(--white);
   background-color: var(--forest);
-  padding: 6px 16px;
-  border-radius: 4px;
+  padding: 8px 24px;
+  border-radius: 9999px; /* Pill shape */
   text-decoration: none;
   transition: background-color 0.2s var(--ease-out);
 }
