@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useScroll, useMotionValueEvent } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import styles from './Navbar.module.css';
 
 /**
@@ -22,6 +23,7 @@ export default function Navbar() {
         <div className={styles.links}>
           <a href="#startups" className={styles.link}>I&rsquo;m a Startup</a>
           <a href="#landlords" className={styles.link}>I&rsquo;m a Landlord</a>
+          <Link to="/login" className={styles.loginBtn}>Sign In</Link>
         </div>
       </div>
     </nav>

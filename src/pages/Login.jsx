@@ -72,14 +72,14 @@ export default function Login() {
               className={`${styles.roleBtn} ${role === 'startup' ? styles.roleBtnActive : ''}`}
               onClick={() => setRole('startup')}
             >
-              I am a Startup
+              Startup
             </button>
             <button 
               type="button" 
               className={`${styles.roleBtn} ${role === 'landlord' ? styles.roleBtnActive : ''}`}
               onClick={() => setRole('landlord')}
             >
-              I am a Landlord
+              Landlord
             </button>
           </div>
 
@@ -138,75 +138,6 @@ export default function Login() {
                 className={styles.input}
               />
             </div>
-
-            {/* Dynamic Options changing from selection */}
-            {isSignUp && role === 'startup' && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className={styles.dynamicFields}
-              >
-                <div className={styles.inputGroup}>
-                  <label htmlFor="funding" className={styles.label}>Funding Stage</label>
-                  <select 
-                    id="funding" 
-                    value={fundingStage} 
-                    onChange={(e) => setFundingStage(e.target.value)}
-                    className={styles.select}
-                  >
-                    <option value="Seed">Pre-seed / Seed</option>
-                    <option value="Series A">Series A</option>
-                    <option value="Series B">Series B / Growth</option>
-                    <option value="Academic">Spin-out / Academic</option>
-                  </select>
-                </div>
-                <div className={styles.inputGroup}>
-                  <label htmlFor="sqft" className={styles.label}>Target Lab Size (sqft)</label>
-                  <input 
-                    type="number" 
-                    id="sqft" 
-                    value={reqSqft} 
-                    onChange={(e) => setReqSqft(e.target.value)} 
-                    placeholder="e.g. 1500"
-                    required
-                    className={styles.input}
-                  />
-                </div>
-              </motion.div>
-            )}
-
-            {isSignUp && role === 'landlord' && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className={styles.dynamicFields}
-              >
-                <div className={styles.inputGroup}>
-                  <label htmlFor="propertyName" className={styles.label}>Property / Facility Name</label>
-                  <input 
-                    type="text" 
-                    id="propertyName" 
-                    value={propertyName} 
-                    onChange={(e) => setPropertyName(e.target.value)} 
-                    placeholder="e.g. Victoria House Lab Suite"
-                    required
-                    className={styles.input}
-                  />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label htmlFor="propertySqft" className={styles.label}>Available Lab Size (sqft)</label>
-                  <input 
-                    type="number" 
-                    id="propertySqft" 
-                    value={propertySqft} 
-                    onChange={(e) => setPropertySqft(e.target.value)} 
-                    placeholder="e.g. 5000"
-                    required
-                    className={styles.input}
-                  />
-                </div>
-              </motion.div>
-            )}
 
             <button type="submit" className={styles.submitBtn}>
               {isSignUp ? 'Create Account' : 'Sign In'}

@@ -60,6 +60,22 @@
   color: var(--forest);
 }
 
+.loginBtn {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--white);
+  background-color: var(--forest);
+  padding: 6px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s var(--ease-out);
+}
+
+.loginBtn:hover {
+  background-color: var(--forest-dark);
+}
+
 @media (max-width: 768px) {
   .links {
     gap: var(--space-md);
@@ -67,5 +83,10 @@
 
   .link {
     font-size: 0.85rem;
+  }
+
+  .loginBtn {
+    font-size: 0.85rem;
+    padding: 4px 10px;
   }
 }
