@@ -33,13 +33,14 @@
 
 .sketchCard {
   background-color: var(--white);
-  border-radius: 12px;
-  padding: var(--space-md);
+  border-radius: 9999px; /* Pill/circular shape */
+  aspect-ratio: 1 / 1; /* Perfect circle */
+  padding: var(--space-lg);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
   display: flex;
   justify-content: center;
   align-items: center;
-  max-width: 440px;
+  max-width: 400px;
   width: 100%;
   overflow: hidden;
 }
@@ -54,8 +55,9 @@
 
 .sketchImage {
   width: 100%;
-  height: auto;
-  border-radius: 8px;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 9999px; /* Pill/circular shape */
   mix-blend-mode: multiply;
   display: block;
 }
