@@ -12,9 +12,11 @@ export default function ThreeFloorPlan() {
     if (!containerRef.current) return;
 
     // --- Scene Setup ---
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight;
+    const width = containerRef.current.clientWidth || window.innerWidth || 800;
+    const height = containerRef.current.clientHeight || window.innerHeight || 600;
     
+    console.log("ThreeJS Canvas size initialized to:", width, height);
+
     const scene = new THREE.Scene();
     
     // Perspective camera for premium architectural depth
@@ -25,6 +27,10 @@ export default function ThreeFloorPlan() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    
+    // Set display: block to avoid layout offsets
+    renderer.domElement.style.display = 'block';
+    
     containerRef.current.appendChild(renderer.domElement);
 
     // --- Lights ---
