@@ -99,17 +99,16 @@
 /* Liquid Glass Dropdown Profile Card */
 .dropdownCard {
   position: absolute;
-  top: calc(100% + 12px);
+  top: calc(100% + 18px); /* Aligns top of card exactly with bottom of navbar */
   right: 0;
   width: 280px;
-  background-color: rgba(255, 255, 255, 0.55); /* Liquid glass base */
+  background-color: rgba(253, 251, 247, 0.96); /* More opaque, clean warm-white */
   backdrop-filter: blur(28px) saturate(120%);
   -webkit-backdrop-filter: blur(28px) saturate(120%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(168, 159, 145, 0.25);
   border-radius: 12px;
   padding: var(--space-md);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4),
-              0 20px 40px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
   z-index: 100;
   display: flex;
   flex-direction: column;
